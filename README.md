@@ -14,5 +14,5 @@ The project is not an example project. The project uses Python, Flask, and SQLit
 python3 -m venv .venv
 .venv/bin/activate #on linux/macos windows .venv\scripts\activate
 pip install -r requirements.txt
-flask run
+python3 app.py
 ```
