@@ -31,11 +31,20 @@ class SqlConnection:
         connection.close()
         return data
 
-def get_user_by_id(user_id: int) -> tuple[int, str, str]:
+def get_user_by_id(user_id: int) -> tuple[str, str]:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    user = conn.read("SELECT * FROM Users WHERE ?", (user_id, ))
+    user = conn.read("SELECT username, password FROM Users WHERE id = ?", (user_id, ))
     return user[0]
 
-def insert_user(user_id: int, username: str, password: str):
+def get_user_by_username(username: str) -> tuple[int, str, str] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    conn.write("INSERT INTO Users VALUES (?,?,?)", (user_id, username, password))
+    user = conn.read("SELECT * FROM Users WHERE username = ?", (username, ))
+
+    if len(user) > 0:
+        return user[0]
+
+    return None
+
+def insert_user(username: str, password: str):
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    conn.write("INSERT INTO Users (username, password) VALUES (?,?)", (username, password))

@@ -9,13 +9,16 @@
 {% block content %}
 <div class="container">
     <div class="form-container">
-        <h1>Kirjautuminen</h1>
+        <h1>{% if login_screen %} Kirjautuminen {% else %} Käyttäjän luominen {% endif %}</h1>
         <form method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <input type="text" name="username" placeholder="Nimi" required>
             <input type="password" name="password" placeholder="Salasana" required>
-            <button type="submit">Kirjaudu</button>
+            <button type="submit">{% if login_screen %} Kirjaudu {% else %} Luo käyttäjä {% endif %}</button>
         </form>
+        {% if login_screen %}
+        <a href="/create_user">ei käyttäjää?</a>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
