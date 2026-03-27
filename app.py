@@ -4,7 +4,7 @@ from flask_wtf import CSRFProtect
 from dotenv import load_dotenv
 import os, bcrypt
 
-from db import insert_user, insert_boardgame, get_user_by_id, get_user_by_username, get_all_boardgames, get_boardgame_by_name
+from db import insert_user, insert_boardgame, get_user_by_id, get_user_by_username, get_all_boardgames, get_boardgame_by_name, get_all_boardgames_by_search_word
 from datatypes import User, Boardgame
 
 load_dotenv()
@@ -29,9 +29,13 @@ def inject_flags():
         flags["username"] = current_user.username
     return flags
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def index():
     boardgames = get_all_boardgames()
+
+    if request.method == "POST":
+        boardgames = get_all_boardgames_by_search_word(request.form["search_word"])
+
     if boardgames:
         return render_template("index.html", boardgames=boardgames)
     return render_template("index.html")
