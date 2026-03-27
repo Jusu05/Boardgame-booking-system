@@ -70,10 +70,24 @@ def insert_boardgame(boardgame: Boardgame):
         boardgame.duration,
         boardgame.category_id
     ]
-
+    
     if boardgame.free_games:
         values.append(boardgame.free_games)
         conn.write("INSERT INTO Boardgames (name, description, number_of_players, duration, category_id, free_games) VALUES (?,?,?,?,?,?);", tuple(values))
         return
 
     conn.write("INSERT INTO Boardgames (name, description, number_of_players, duration, category_id) VALUES (?,?,?,?,?);", tuple(values))
+
+def get_boardgame_by_name(boardgame_name: str) -> Boardgame | None:
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    result = conn.read("SELECT * FROM Boardgames WHERE name = ?", (boardgame_name,))
+    if len(result) > 0:
+        return Boardgame(boardgame_name, result[0][3], result[0][5], result[0][0], result[0][2], result[0][4], result[0][6], result[0][7])
+    return None
+
+def get_all_boardgames() -> list[Boardgame] | None:
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    result = conn.read("SELECT * FROM Boardgames;")
+    if len(result) > 0:
+        return list(map(lambda result: Boardgame(result[1], result[3], result[5], result[0], result[2], result[4], result[6], result[7]), result))
+    return None
