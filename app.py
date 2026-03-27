@@ -1,10 +1,11 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
-from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_wtf import CSRFProtect
 from dotenv import load_dotenv
 import os, bcrypt
 
-from db import insert_user, get_user_by_id, get_user_by_username
+from db import insert_user, insert_boardgame, get_user_by_id, get_user_by_username
+from datatypes import User, Boardgame
 
 load_dotenv()
 app = Flask(__name__)
@@ -15,13 +16,6 @@ app.config.from_mapping(
 csrf = CSRFProtect(app)
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
-
-class User(UserMixin):
-    def __init__(self, id: int, username: str, password: bytes):
-        super().__init__()
-        self.id = id
-        self.username = username
-        self.password = password
 
 @login_manager.user_loader
 def load_user(user_id: int):
@@ -70,6 +64,14 @@ def create_user():
 def logout():
     logout_user()
     return redirect("/")
+
+@app.route("/add_boardgame",  methods=["GET", "POST"])
+@login_required
+def add_boardgame():
+    if request.method == "POST":
+        boardgame: Boardgame = Boardgame.from_form(request.form)
+        insert_boardgame(boardgame)
+    return render_template("add_boardgame.html")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
