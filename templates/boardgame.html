@@ -14,5 +14,12 @@
         <div>Luokka: {{ boardgame.category }}</div>
     </div>
     <div>{{ boardgame.description }}</div>
+    {% if username %}
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <button type="submit">Muokkaa peliä</button>
+    <form>
+    {% endif %}
+
 </div>
 {% endblock %}

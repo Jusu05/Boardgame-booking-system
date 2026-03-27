@@ -4,7 +4,7 @@ from flask_wtf import CSRFProtect
 from dotenv import load_dotenv
 import os, bcrypt
 
-from db import insert_user, insert_boardgame, get_user_by_id, get_user_by_username, get_all_boardgames, get_boardgame_by_name, get_all_boardgames_by_search_word
+from db import insert_user, insert_boardgame, get_user_by_id, get_user_by_username, get_all_boardgames, get_boardgame_by_name, get_all_boardgames_by_search_word, update_boardgame
 from datatypes import User, Boardgame
 
 load_dotenv()
@@ -72,13 +72,20 @@ def logout():
     logout_user()
     return redirect("/")
 
-@app.route("/boardgame/<boardgame_name>")
+@app.route("/boardgame/<boardgame_name>", methods=["GET", "POST", "PUT"])
 def boardgame(boardgame_name: str):
     boardgame = get_boardgame_by_name(boardgame_name)
     if boardgame:
+        if request.method == "POST":
+            try:
+                boardgame = Boardgame.from_form(request.form)
+            except KeyError:
+                return render_template("add_boardgame.html", boardgame=boardgame)
+            update_boardgame(boardgame)
+
         return render_template("boardgame.html", boardgame=boardgame)
 
-@app.route("/add_boardgame",  methods=["GET", "POST"])
+@app.route("/add_boardgame", methods=["GET", "POST"])
 @login_required
 def add_boardgame():
     if request.method == "POST":
