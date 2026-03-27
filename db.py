@@ -1,6 +1,8 @@
 import sqlite3, os
 from typing import LiteralString
 
+from datatypes import Boardgame
+
 class SqlConnection:
     def __init__(self, file: str) -> None:
         self._file = file
@@ -33,12 +35,12 @@ class SqlConnection:
 
 def get_user_by_id(user_id: int) -> tuple[str, str]:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    user = conn.read("SELECT username, password FROM Users WHERE id = ?", (user_id, ))
+    user = conn.read("SELECT username, password FROM Users WHERE id = ?;", (user_id, ))
     return user[0]
 
 def get_user_by_username(username: str) -> tuple[int, str, str] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    user = conn.read("SELECT * FROM Users WHERE username = ?", (username, ))
+    user = conn.read("SELECT * FROM Users WHERE username = ?;", (username, ))
 
     if len(user) > 0:
         return user[0]
@@ -47,4 +49,31 @@ def get_user_by_username(username: str) -> tuple[int, str, str] | None:
 
 def insert_user(username: str, password: str):
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    conn.write("INSERT INTO Users (username, password) VALUES (?,?)", (username, password))
+    if len(username) > 100:
+        raise ValueError("username is longer than 100 character")
+    conn.write("INSERT INTO Users (username, password) VALUES (?,?);", (username, password))
+
+def add_avatar(user_id: int, avatar):
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    conn.write("UPDATE Users SET avatar = ? WHERE id = ?;", (avatar, user_id))
+
+def insert_boardgame(boardgame: Boardgame):
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    if not boardgame.category_id:
+        raise ValueError("Boardgame does not have category")
+    if len(boardgame.name) > 100:
+        raise ValueError("Boardgame's name is longer than 100 character")
+    values = [
+        boardgame.name,
+        boardgame.description,
+        boardgame.number_of_players,
+        boardgame.duration,
+        boardgame.category_id
+    ]
+
+    if boardgame.free_games:
+        values.append(boardgame.free_games)
+        conn.write("INSERT INTO Boardgames (name, description, number_of_players, duration, category_id, free_games) VALUES (?,?,?,?,?,?);", tuple(values))
+        return
+
+    conn.write("INSERT INTO Boardgames (name, description, number_of_players, duration, category_id) VALUES (?,?,?,?,?);", tuple(values))
