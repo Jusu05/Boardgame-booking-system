@@ -4,7 +4,7 @@ from flask_wtf import CSRFProtect
 from dotenv import load_dotenv
 import os, bcrypt
 
-from db import insert_user, insert_boardgame, get_user_by_id, get_user_by_username
+from db import insert_user, insert_boardgame, get_user_by_id, get_user_by_username, get_all_boardgames
 from datatypes import User, Boardgame
 
 load_dotenv()
@@ -31,6 +31,9 @@ def inject_flags():
 
 @app.route("/")
 def index():
+    boardgames = get_all_boardgames()
+    if boardgames:
+        return render_template("index.html", boardgames=boardgames)
     return render_template("index.html")
 
 @app.route("/login", methods=["GET", "POST"])

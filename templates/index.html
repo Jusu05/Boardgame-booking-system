@@ -6,4 +6,17 @@
 {% endblock %}
 
 {% block content %}
+<div>
+{% if boardgames %}
+    {% for boardgame in boardgames %}
+    <div>
+        <h3>{{ boardgame.name }}</h3>
+        <div>Pelaaja määrä: {{ boardgame.number_of_players }}</div>
+        <div>Kesto: {{ boardgame.duration }} min</div>
+        <div>Luokka: {{ boardgame.category }}</div>
+        <a href="/boardgame/{{ boardgame.name }}">Lisää</a>
+    </div>
+    {% endfor %}
+{% endif %}
+</div>
 {% endblock %}
