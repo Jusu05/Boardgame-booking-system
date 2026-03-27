@@ -9,7 +9,7 @@ The project is not an example project. The project uses Python, Flask, and SQLit
 ☑ Users can search board game listings by keyword \
 
 When user is logged in user can \
-&emsp;&emsp;☐ create, edit, and delete board game \
+&emsp;&emsp;☑ create, edit, and delete board game \
 &emsp;&emsp;☐ add images of board game to board game \
 &emsp;&emsp;☐ add a avatar \
 &emsp;&emsp;☐ review board game \

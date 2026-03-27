@@ -78,6 +78,25 @@ def insert_boardgame(boardgame: Boardgame):
 
     conn.write("INSERT INTO Boardgames (name, description, number_of_players, duration, category_id) VALUES (?,?,?,?,?);", tuple(values))
 
+def update_boardgame(boardgame: Boardgame):
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    if not boardgame.category_id:
+        raise ValueError("Boardgame does not have category")
+    if len(boardgame.name) > 100:
+        raise ValueError("Boardgame's name is longer than 100 character")
+    
+    values = (
+        boardgame.name,
+        boardgame.description,
+        boardgame.number_of_players,
+        boardgame.duration,
+        boardgame.category_id,
+        boardgame.free_games,
+        boardgame.id
+    )
+    
+    conn.write("UPDATE Boardgames SET name = ?, description = ?, number_of_players = ?, duration = ?, category_id = ?, free_games = ? - reserved_games WHERE id = ?;", values)
+
 def get_boardgame_by_name(boardgame_name: str) -> Boardgame | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read("SELECT * FROM Boardgames WHERE name = ?", (boardgame_name,))

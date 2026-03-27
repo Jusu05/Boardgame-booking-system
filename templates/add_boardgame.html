@@ -3,14 +3,14 @@
 {% block content %}
 <div class="container">
     <div class="form-container">
-        <h1>{% if login_screen %} Kirjautuminen {% else %} Käyttäjän luominen {% endif %}</h1>
+        <h1>{% if boardgame %} Lautapelin {{boardgame.name}} muokkaaminen {% else %} Lautapelin lisääminen {% endif %}</h1>
         <form method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <input name="name" type="text" required>
-            <input name="number_of_players" type="number" placeholder=4 required>
-            <input name="duration" type="number" placeholder="30" required>
-            <input name="description" placeholder="" required>
-            <select name="category_id" id="category_id">
+            <input name="name" type="text"  {% if boardgame %} placeholder={{ boardgame.name }} {% else %} required {% endif %}>
+            <input name="number_of_players" type="number" placeholder={% if boardgame %} {{ boardgame.number_of_players }} {% else %} 4 required {% endif %}>
+            <input name="duration" type="number" placeholder={% if boardgame %} {{ boardgame.duration }} {% else %} 30 required {% endif %}>
+            <input name="description" {% if boardgame %} placeholder={{ boardgame.description }} {% endif %}>
+            <select name="category_id" id="category_id" {% if boardgame %} selected={{ boardgame.category_id }} {% endif %}>
                 <option value=0>Valitse pelin luokka</option>
                 <option value=1>Lasten peli</option>
                 <option value=2>Korttipeli</option>
@@ -21,12 +21,9 @@
                 <option value=7>Tietopeli</option>
                 <option value=8>Perhepeli</option>
             </select>
-            <input name="free_games" type="number" placeholder=1>
-            <button type="submit">Lisää peli</button>
+            <input name="free_games" type="number" placeholder={% if boardgame %} {{ boardgame.free_games }} {% else %} 1 {% endif %}>
+            <button type="submit">{% if boardgame %} Muokkaa lautapeliä {% else %} Lisää lautapeli {% endif %}</button>
         </form>
-        {% if login_screen %}
-        <a href="/add_boardgame">ei käyttäjää?</a>
-        {% endif %}
     </div>
 </div>
 {% endblock %}

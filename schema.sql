@@ -48,3 +48,5 @@ CREATE TABLE IF NOT EXISTS Reservation (
     FOREIGN KEY (boardgame_id) REFERENCES Boardgames(id),
     FOREIGN KEY (user_id) REFERENCES Users(id)
 );
+
+-- TODO add indexes
