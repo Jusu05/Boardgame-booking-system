@@ -91,3 +91,10 @@ def get_all_boardgames() -> list[Boardgame] | None:
     if len(result) > 0:
         return list(map(lambda result: Boardgame(result[1], result[3], result[5], result[0], result[2], result[4], result[6], result[7]), result))
     return None
+
+def get_all_boardgames_by_search_word(search_word: str) -> list[Boardgame] | None:
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    result = conn.read("SELECT * FROM Boardgames WHERE name LIKE ?;", (f"%{search_word}%", ))
+    if len(result) > 0:
+        return list(map(lambda result: Boardgame(result[1], result[3], result[5], result[0], result[2], result[4], result[6], result[7]), result))
+    return None

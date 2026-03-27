@@ -6,6 +6,14 @@
 {% endblock %}
 
 {% block content %}
+<div class="search-container">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="text" name="search_word" required>
+        <button type="submit">Hae</button>
+    </form>
+</div>
+
 <div>
 {% if boardgames %}
     {% for boardgame in boardgames %}
