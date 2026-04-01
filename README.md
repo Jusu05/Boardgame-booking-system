@@ -19,8 +19,8 @@ When user is logged in user can \
 ## Running
 ### Setup
 ```bash
-sqlite3 data.db schema.sql
-sqlite3 data.db init.sql
+sqlite3 data.db < schema.sql
+sqlite3 data.db < init.sql
 cp .env.example .env
 python3 -m venv .venv
 .venv/bin/activate #on linux/macos windows .venv\scripts\activate
