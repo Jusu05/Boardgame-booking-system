@@ -1,13 +1,14 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 from flask_wtf import CSRFProtect
-from dotenv import load_dotenv
 import os, bcrypt
 
 from db import insert_user, insert_boardgame, get_user_by_id, get_user_by_username, get_all_boardgames, get_boardgame_by_name, get_all_boardgames_by_search_word, update_boardgame
+from env_parser import load_dotenv
 from datatypes import User, Boardgame
 
 load_dotenv()
+
 app = Flask(__name__)
 app.config.from_mapping(
     SESSION_COOKIE_SAMESITE="Strict",
