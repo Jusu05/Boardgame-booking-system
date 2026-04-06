@@ -3,6 +3,49 @@
 {% block title %}Lautapeli varaamo{% endblock %}
 
 {% block head %}
+<style>
+    .boardgame{
+        display: flex;
+        align-items: flex-start;
+        max-width: 510px;
+        margin-top: 10px;
+        padding: 5px;
+        gap: 20px;
+        box-sizing: border-box;
+        border: 2px solid #000;
+        background: #fff;
+    }
+    .boardgame:hover {
+        filter: brightness(85%);
+    }
+    .boardgame-thumb{
+        width: 220px;
+        height: 220px;
+        background: #fff;
+        border: 2px solid #000;
+        border-radius: 18px;
+        box-sizing: border-box;
+        flex: 0 0 auto;
+    }
+    .boardgame-info{
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        flex: 1 1 auto;
+        color: #111;
+    }
+    .boardgame-info p{
+        margin: 6px 0;
+        font-size: 16px;
+    }
+    .boardgame-title{
+        margin: 2px 0 10px 0;
+        font-size: 40px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: 0.5px;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -17,13 +60,17 @@
 <div>
 {% if boardgames %}
     {% for boardgame in boardgames %}
-    <div>
-        <h3>{{ boardgame.name }}</h3>
-        <div>Pelaaja määrä: {{ boardgame.number_of_players }}</div>
-        <div>Kesto: {{ boardgame.duration }} min</div>
-        <div>Luokka: {{ boardgame.category }}</div>
-        <a href="/boardgame/{{ boardgame.name }}">Lisää</a>
-    </div>
+    <a style="text-decoration-line: none;" href="/boardgame/{{ boardgame.name }}">
+        <div class="boardgame">
+            <div class="boardgame-thumb"></div>
+            <div class="boardgame-info">
+                <h3 class="boardgame-title">{{ boardgame.name }}</h3>
+                <p>Pelaaja määrä: {{ boardgame.number_of_players }}</p>
+                <p>Kesto: {{ boardgame.duration }} min</p>
+                <p>Luokka: {{ boardgame.category }}</div>
+            </div>
+        </div>
+    </a>
     {% endfor %}
 {% endif %}
 </div>
