@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from flask_login import UserMixin
+from security import UserMixin
 
 @dataclass
 class User(UserMixin):
