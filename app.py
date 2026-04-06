@@ -1,5 +1,6 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify
-import os, bcrypt
+from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
 from db import insert_user, insert_boardgame, get_user_by_id, get_user_by_username, get_all_boardgames, get_boardgame_by_name, get_all_boardgames_by_search_word, update_boardgame
 from security import CSRFProtect, LoginManager, login_user, login_required, logout_user, current_user
@@ -46,8 +47,8 @@ def login():
         username = request.form["username"]
         user = get_user_by_username(username)
 
-        if user and bcrypt.checkpw(request.form["password"].encode("utf-8"), user[2]):
-            login_user(User(user[0], user[1], user[2]))
+        if user and check_password_hash(user[2], request.form["password"]):
+            login_user(User(user[0], user[1]))
             return redirect("/")
         else:
             flash("Väärä salasana tai käyttäjätunnus")
@@ -58,7 +59,7 @@ def login():
 def create_user():
     if request.method == "POST":
         username = request.form["username"]
-        password = bcrypt.hashpw(request.form["password"].encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        password = generate_password_hash(request.form["password"])
         try:
             insert_user(username, password)
         except Exception:

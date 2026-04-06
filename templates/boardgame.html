@@ -14,7 +14,7 @@
         <div>Luokka: {{ boardgame.category }}</div>
     </div>
     <div>{{ boardgame.description }}</div>
-    {% if username %}
+    {% if current_user.is_authenticated %}
     <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <button type="submit">Muokkaa peliä</button>
