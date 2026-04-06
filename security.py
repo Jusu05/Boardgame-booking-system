@@ -99,7 +99,6 @@ def _get_login_manager() -> LoginManager:
             "login_manager.init_app(app) before using auth helpers."
         )
 
-
 def login_user(user, remember: bool = False) -> bool:
     if not user.is_active:
         return False
@@ -111,13 +110,11 @@ def login_user(user, remember: bool = False) -> bool:
     g._current_user = user
     return True
 
-
 def logout_user():
     login_manager = _get_login_manager()
     session.pop(login_manager.session_id)
     session.modified = True
     g._current_user = AnonymousUser()
-
 
 def login_required(view):
     @wraps(view)
