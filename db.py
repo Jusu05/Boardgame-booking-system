@@ -160,3 +160,14 @@ def get_all_boardgames_by_search_word(search_word: str) -> list[Boardgame] | Non
         return list(map(lambda result: Boardgame(result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7]), result))
 
     return None
+
+def get_boardgame_categories() -> list[tuple[int, str]] | None:
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    result = conn.read("""
+        SELECT id, category
+        FROM Categories
+        ORDER BY CASE WHEN id == 0 THEN 1 ELSE 0 END, id
+    """)
+    if len(result) > 0:
+        return result
+    return None

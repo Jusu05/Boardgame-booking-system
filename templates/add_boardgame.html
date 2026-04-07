@@ -12,14 +12,11 @@
             <input name="description" {% if boardgame %} placeholder={{ boardgame.description }} {% endif %}>
             <select name="category_id" id="category_id" {% if boardgame %} selected={{ boardgame.category_id }} {% endif %}>
                 <option value=0>Valitse pelin luokka</option>
-                <option value=1>Lasten peli</option>
-                <option value=2>Korttipeli</option>
-                <option value=3>Pakohuonepeli</option>
-                <option value=4>Yhteistyöpeli</option>
-                <option value=5>Sotapeli</option>
-                <option value=6>Partypeli</option>
-                <option value=7>Tietopeli</option>
-                <option value=8>Perhepeli</option>
+                {% if boardgame_categories %}
+                    {% for boardgame_category in boardgame_categories %}
+                    <option value={{ boardgame_category[0] }}>{{ boardgame_category[1] }}</option>
+                    {% endfor %}
+                {% endif %}
             </select>
             <input name="free_games" type="number" placeholder={% if boardgame %} {{ boardgame.free_games }} {% else %} 1 {% endif %}>
             <button type="submit">{% if boardgame %} Muokkaa lautapeliä {% else %} Lisää lautapeli {% endif %}</button>
