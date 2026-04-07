@@ -1,13 +1,11 @@
 import sqlite3, os
-from typing import LiteralString
-
-from datatypes import Boardgame
+from datatypes import Boardgame, User
 
 class SqlConnection:
     def __init__(self, file: str) -> None:
         self._file = file
 
-    def write(self, command: LiteralString, params: tuple = None):
+    def write(self, command: str, params: tuple = None):
         connection = sqlite3.connect(self._file)
         cursor = connection.cursor()
 
@@ -19,7 +17,7 @@ class SqlConnection:
         connection.commit()
         connection.close()
 
-    def read(self, command: LiteralString, params: tuple = None) -> list:
+    def read(self, command: str, params: tuple = None) -> list:
         connection = sqlite3.connect(self._file)    
         cursor = connection.cursor()
 
