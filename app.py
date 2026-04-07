@@ -20,8 +20,7 @@ login_manager.login_view = "login"
 
 @login_manager.user_loader
 def load_user(user_id: int):
-    username, password = get_user_by_id(user_id)
-    return User(user_id, username, password)
+    return get_user_by_id(user_id)
 
 @app.context_processor
 def inject_flags():
@@ -47,8 +46,8 @@ def login():
         username = request.form["username"]
         user = get_user_by_username(username)
 
-        if user and check_password_hash(user[2], request.form["password"]):
-            login_user(User(user[0], user[1]))
+        if user and check_password_hash(user.password, request.form["password"]):
+            login_user(user)
             return redirect("/")
         else:
             flash("Väärä salasana tai käyttäjätunnus")
@@ -81,7 +80,8 @@ def boardgame(boardgame_name: str):
             try:
                 boardgame = Boardgame.from_form(request.form)
             except KeyError:
-                return render_template("add_boardgame.html", boardgame=boardgame)
+                boardgame_categories = get_boardgame_categories()
+                return render_template("add_boardgame.html", boardgame=boardgame, boardgame_categories=boardgame_categories)
             update_boardgame(boardgame)
 
         return render_template("boardgame.html", boardgame=boardgame)
