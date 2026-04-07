@@ -13,7 +13,7 @@
     <a href="/" class="brand">Lautapeli varaamo</a>
     <nav id="nav" class="nav" aria-label="Main navigation">
       <ul class="nav-list">
-        {% if current_user.is_authenticated %}
+        {% if username %}
         <li><a href="/user" class="nav-link">{{ username }}</a></li>
         <li><a href="/add_boardgame" class="nav-link">lisää peli</a></li>
         {% else %}

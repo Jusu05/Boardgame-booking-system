@@ -5,6 +5,7 @@ from security import UserMixin
 class User(UserMixin):
     id: int
     username: str
+    password: str
 
 class Boardgame:
     def __init__(self, name: str, number_of_players: int , duration: int, id: int | None = None, description: int | None = None, category_id: int | None = None, free_games: int | None = None, reserved_games: int | None = None):

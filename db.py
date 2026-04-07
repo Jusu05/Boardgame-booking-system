@@ -31,17 +31,21 @@ class SqlConnection:
         connection.close()
         return data
 
-def get_user_by_id(user_id: int) -> tuple[str, str]:
+def get_user_by_id(user_id: int) -> User | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     user = conn.read("SELECT username, password FROM Users WHERE id = ?;", (user_id, ))
-    return user[0]
-
-def get_user_by_username(username: str) -> tuple[int, str, str] | None:
-    conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    user = conn.read("SELECT * FROM Users WHERE username = ?;", (username, ))
 
     if len(user) > 0:
-        return user[0]
+        return User(user_id, user[0][0], user[0][1])
+
+    return None
+
+def get_user_by_username(username: str) -> User | None:
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    user = conn.read("SELECT id, password FROM Users WHERE username = ?;", (username, ))
+
+    if len(user) > 0:
+        return User(user[0][0], username, user[0][1])
 
     return None
 
@@ -97,21 +101,62 @@ def update_boardgame(boardgame: Boardgame):
 
 def get_boardgame_by_name(boardgame_name: str) -> Boardgame | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    result = conn.read("SELECT * FROM Boardgames WHERE name = ?", (boardgame_name,))
+    result = conn.read("""
+        SELECT
+            number_of_players,
+            duration,
+            id,
+            description,
+            category_id,
+            free_games,
+            reserved_games
+        FROM Boardgames
+        WHERE name = ?;
+        """,
+        (boardgame_name,)
+    )
+
     if len(result) > 0:
-        return Boardgame(boardgame_name, result[0][3], result[0][5], result[0][0], result[0][2], result[0][4], result[0][6], result[0][7])
+        return Boardgame(boardgame_name, result[0][0], result[0][1], result[0][2], result[0][3], result[0][4], result[0][5], result[0][6])
     return None
 
 def get_all_boardgames() -> list[Boardgame] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    result = conn.read("SELECT * FROM Boardgames;")
+    result = conn.read("""
+        SELECT
+            name,
+            number_of_players,
+            duration,
+            id,
+            description,
+            category_id,
+            free_games,
+            reserved_games
+        FROM Boardgames;
+        """
+    )
     if len(result) > 0:
-        return list(map(lambda result: Boardgame(result[1], result[3], result[5], result[0], result[2], result[4], result[6], result[7]), result))
+        return list(map(lambda result: Boardgame(result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7]), result))
     return None
 
 def get_all_boardgames_by_search_word(search_word: str) -> list[Boardgame] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    result = conn.read("SELECT * FROM Boardgames WHERE name LIKE ?;", (f"%{search_word}%", ))
+    result = conn.read("""
+        SELECT
+            name,
+            number_of_players,
+            duration,
+            id,
+            description,
+            category_id,
+            free_games,
+            reserved_games
+        FROM Boardgames;
+        WHERE name LIKE ?;""",
+         (f"%{search_word}%", )
+    )
+
     if len(result) > 0:
-        return list(map(lambda result: Boardgame(result[1], result[3], result[5], result[0], result[2], result[4], result[6], result[7]), result))
+        return list(map(lambda result: Boardgame(result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7]), result))
+
     return None
