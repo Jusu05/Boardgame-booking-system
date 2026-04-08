@@ -1,0 +1,140 @@
+.nav-header {
+    border-bottom: 1px solid black;
+    margin-bottom: 0.25rem;
+}
+
+.nav-inner {
+    margin: 0 auto;
+    width: min(800px, calc(100% - 24px));
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.brand {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: black;
+    text-decoration-line: none;
+    margin-bottom: 0.25rem;
+}
+
+.nav {
+    flex: 1;
+}
+
+.nav-list {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-link {
+    display: inline-block;
+    padding: 0.4rem 0.6rem;
+    text-decoration-line: none;
+    border-radius: 6px;
+    font-size: 0.92rem;
+    color: black;
+    border: 1px solid black;
+    margin-bottom: 0.25rem;
+}
+
+.boardgame-card {
+    display: flex;
+    align-items: flex-start;
+    max-width: 510px;
+    margin-top: 10px;
+    padding: 5px;
+    gap: 20px;
+    box-sizing: border-box;
+    border: 2px solid #000;
+    color: #000;
+    background: #fff;
+}
+
+.boardgame-card:hover {
+    filter: brightness(85%);
+}
+
+.boardgame-page {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.boardgame-thumb {
+    width: 220px;
+    height: 220px;
+    border: 2px solid #000;
+    border-radius: 18px;
+    box-sizing: border-box;
+    flex: 0 0 auto;
+}
+
+.boardgame-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    flex: 1 1 auto;
+}
+
+.boardgame-info .property{
+    margin: 6px 0;
+    font-size: 16px;
+}
+
+.boardgame-info .description {
+    font-size: 16px;
+    line-height: 1.6;
+    margin: 10px 0 0;
+}
+
+.boardgame-title {
+    margin: 2px 0 10px 0;
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.5px;
+}
+
+.boardgame-page-image-column {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.boardgame-image {
+    width: 500px;
+    height: 500px;
+    border: 1.5px solid #aaa;
+    border-radius: 20px;
+    background: #fff;
+}
+
+.boardgame-image-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.boardgame-image-selector .arrow {
+    width: 14px;
+    height: 14px;
+}
+
+.boardgame-image-selector .dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: black;
+}
+
+.boardgame-image-selector .dot.inactive {
+    opacity: 0.25;
+}

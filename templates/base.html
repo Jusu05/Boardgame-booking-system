@@ -4,54 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
     {% block head %}{% endblock %}
-
-    <style>
-        .nav-header {
-            border-bottom: 1px solid black;
-            margin-bottom: 0.25rem;
-        }
-
-        .nav-inner {
-            margin: 0 auto;
-            width: min(800px, calc(100% - 24px));
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .brand {
-            font-weight: 700;
-            font-size: 1.05rem;
-            color: black;
-            text-decoration-line: none;
-            margin-bottom: 0.25rem;
-        }
-
-        .nav {
-            flex: 1;
-        }
-
-        .nav-list {
-            display: flex;
-            gap: 0.25rem;
-            align-items: center;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .nav-link {
-            display: inline-block;
-            padding: 0.4rem 0.6rem;
-            text-decoration-line: none;
-            border-radius: 6px;
-            font-size: 0.92rem;
-            color: black;
-            border: 1px solid black;
-            margin-bottom: 0.25rem;
-        }
-    </style>
 </head>
 
 <body>
