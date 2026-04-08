@@ -1,5 +1,5 @@
 import sqlite3, os
-from datatypes import Boardgame, User
+from datatypes import Boardgame, BoardgameCategory, User
 
 class SqlConnection:
     def __init__(self, file: str) -> None:
