@@ -6,7 +6,7 @@ from db import insert_user, get_user_by_id, get_user_by_username, \
      insert_boardgame, update_boardgame, get_all_boardgames, get_boardgame_by_name, get_all_boardgames_by_search_word, get_boardgame_categories
 from security import CSRFProtect, LoginManager, login_user, login_required, logout_user, current_user
 from env_parser import load_dotenv
-from datatypes import User, Boardgame
+from datatypes import Boardgame
 
 load_dotenv()
 
