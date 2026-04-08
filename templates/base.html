@@ -1,27 +1,74 @@
 <!DOCTYPE html>
 <html lang="fi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{% endblock %}</title>
-  {% block head %}{% endblock %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}{% endblock %}</title>
+    {% block head %}{% endblock %}
+
+    <style>
+        .nav-header {
+            border-bottom: 1px solid black;
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-inner {
+            margin: 0 auto;
+            width: min(800px, calc(100% - 24px));
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .brand {
+            font-weight: 700;
+            font-size: 1.05rem;
+            color: black;
+            text-decoration-line: none;
+            margin-bottom: 0.25rem;
+        }
+
+        .nav {
+            flex: 1;
+        }
+
+        .nav-list {
+            display: flex;
+            gap: 0.25rem;
+            align-items: center;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-link {
+            display: inline-block;
+            padding: 0.4rem 0.6rem;
+            text-decoration-line: none;
+            border-radius: 6px;
+            font-size: 0.92rem;
+            color: black;
+            border: 1px solid black;
+            margin-bottom: 0.25rem;
+        }
+    </style>
 </head>
 
 <body>
 <header class="nav-header">
-  <div class="nav-inner">
-    <a href="/" class="brand">Lautapeli varaamo</a>
-    <nav id="nav" class="nav" aria-label="Main navigation">
-      <ul class="nav-list">
-        {% if username %}
-        <li><a href="/user" class="nav-link">{{ username }}</a></li>
-        <li><a href="/add_boardgame" class="nav-link">lisää peli</a></li>
-        {% else %}
-        <li><a href="/login" class="nav-link">Kirjaudu sisään</a></li>
-        {% endif %}
-      </ul>
-    </nav>
-  </div>
+    <div class="nav-inner">
+        <a href="/" class="brand">Lautapeli varaamo</a>
+        <nav id="nav" class="nav" aria-label="Main navigation">
+            <ul class="nav-list">
+                {% if username %}
+                <li><a href="/user" class="nav-link">{{ username }}</a></li>
+                <li><a href="/add_boardgame" class="nav-link">lisää peli</a></li>
+                {% else %}
+                <li><a href="/login" class="nav-link">Kirjaudu sisään</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
 </header>
 
 {% block content %}{% endblock %}
