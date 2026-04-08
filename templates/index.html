@@ -2,57 +2,6 @@
 
 {% block title %}Lautapeli varaamo{% endblock %}
 
-{% block head %}
-<style>
-    .boardgame{
-        display: flex;
-        align-items: flex-start;
-        max-width: 510px;
-        margin-top: 10px;
-        padding: 5px;
-        gap: 20px;
-        box-sizing: border-box;
-        border: 2px solid #000;
-        background: #fff;
-    }
-
-    .boardgame:hover {
-        filter: brightness(85%);
-    }
-
-    .boardgame-thumb{
-        width: 220px;
-        height: 220px;
-        background: #fff;
-        border: 2px solid #000;
-        border-radius: 18px;
-        box-sizing: border-box;
-        flex: 0 0 auto;
-    }
-
-    .boardgame-info{
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        flex: 1 1 auto;
-        color: #111;
-    }
-
-    .boardgame-info p{
-        margin: 6px 0;
-        font-size: 16px;
-    }
-
-    .boardgame-title{
-        margin: 2px 0 10px 0;
-        font-size: 40px;
-        font-weight: 700;
-        line-height: 1;
-        letter-spacing: 0.5px;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="search-container">
     <form method="POST">
@@ -66,13 +15,13 @@
 {% if boardgames %}
     {% for boardgame in boardgames %}
     <a style="text-decoration-line: none;" href="/boardgame/{{ boardgame.name }}">
-        <div class="boardgame">
+        <div class="boardgame-card">
             <div class="boardgame-thumb"></div>
             <div class="boardgame-info">
                 <h3 class="boardgame-title">{{ boardgame.name }}</h3>
-                <p>Pelaaja määrä: {{ boardgame.number_of_players }}</p>
-                <p>Kesto: {{ boardgame.duration }} min</p>
-                <p>Luokka: {{ boardgame.category }}</div>
+                <p class="property">Pelaaja määrä: {{ boardgame.number_of_players }}</p>
+                <p class="property">Kesto: {{ boardgame.duration }} min</p>
+                <p class="property">Luokka: {{ boardgame.category }}</div>
             </div>
         </div>
     </a>

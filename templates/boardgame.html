@@ -2,24 +2,36 @@
 
 {% block title %}Lautapeli varaamo{% endblock %}
 
-{% block head %}
-{% endblock %}
-
 {% block content %}
-<div>
-    <div>
-        <h3>{{ boardgame.name }}</h3>
-        <div>Pelaaja määrä: {{ boardgame.number_of_players }}</div>
-        <div>Kesto: {{ boardgame.duration }} min</div>
-        <div>Luokka: {{ boardgame.category }}</div>
+<div class="boardgame-page">
+    <div class="boardgame-page-image-column">
+        <div class="boardgame-image"></div>
+        <div class="boardgame-image-selector">
+            <svg class="arrow" viewBox="0 0 14 14" fill="none">
+                <polygon points="11,2 2,7 11,12" stroke="black" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+            </svg>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot inactive"></div>
+            <div class="dot inactive"></div>
+            <svg class="arrow" viewBox="0 0 14 14" fill="none">
+                <polygon points="3,2 12,7 3,12" stroke="black" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+            </svg>
+        </div>
     </div>
-    <div>{{ boardgame.description }}</div>
+    <div class="boardgame-info">
+        <h1 class="boardgame-title">{{ boardgame.name }}</h1>
+        <p class="property">Pelaaja määrä: {{ boardgame.number_of_players }}</p>
+        <p class="property">Kesto: {{ boardgame.duration }} min</p>
+        <p class="property">Luokka: {{ boardgame.category }}</p>
+        <p class="description">{{ boardgame.description }}</p>
+    </div>
+
     {% if username %}
     <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <button type="submit">Muokkaa peliä</button>
     <form>
     {% endif %}
-
 </div>
 {% endblock %}
