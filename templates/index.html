@@ -19,6 +19,9 @@
             <div class="boardgame-thumb"></div>
             <div class="boardgame-info">
                 <h3 class="boardgame-title">{{ boardgame.name }}</h3>
+                {% if boardgame.stars %}
+                    {{ stars(boardgame.stars, boardgame.half_star, "boardgame-card-stars")}}
+                {% endif %}
                 <p class="property">Pelaaja määrä: {{ boardgame.number_of_players }}</p>
                 <p class="property">Kesto: {{ boardgame.duration }} min</p>
                 <p class="property">Luokka: {{ boardgame.category }}</div>

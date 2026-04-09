@@ -3,7 +3,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
 from db import insert_user, get_user_by_id, get_user_by_username, \
-     insert_boardgame, update_boardgame, get_all_boardgames, get_boardgame_by_name, get_all_boardgames_by_search_word, get_boardgame_categories
+    insert_boardgame, update_boardgame, get_all_boardgames, get_boardgame_by_name, get_all_boardgames_by_search_word, get_boardgame_categories, \
+    get_reviews_by_boardgame_id
 from security import CSRFProtect, LoginManager, login_user, login_required, logout_user, current_user
 from env_parser import load_dotenv
 from datatypes import Boardgame
@@ -73,9 +74,11 @@ def logout():
     logout_user()
     return redirect("/")
 
-@app.route("/boardgame/<boardgame_name>", methods=["GET", "POST", "PUT"])
+@app.route("/boardgame/<boardgame_name>", methods=["GET", "POST"])
 def boardgame(boardgame_name: str):
     boardgame = get_boardgame_by_name(boardgame_name)
+    reviews = get_reviews_by_boardgame_id(boardgame.id)
+
     if boardgame:
         if request.method == "POST":
             try:
@@ -85,7 +88,7 @@ def boardgame(boardgame_name: str):
                 return render_template("add_boardgame.html", boardgame=boardgame, boardgame_categories=boardgame_categories)
             update_boardgame(boardgame)
 
-        return render_template("boardgame.html", boardgame=boardgame)
+        return render_template("boardgame.html", boardgame=boardgame, reviews=reviews)
 
 @app.route("/add_boardgame", methods=["GET", "POST"])
 @login_required

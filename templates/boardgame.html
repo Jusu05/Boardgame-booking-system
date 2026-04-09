@@ -21,6 +21,9 @@
     </div>
     <div class="boardgame-info">
         <h1 class="boardgame-title">{{ boardgame.name }}</h1>
+        {% if boardgame.stars %}
+            {{ stars(boardgame.stars, boardgame.half_star, "boardgame-page-heading-stars") }}
+        {% endif %}
         <p class="property">Pelaaja määrä: {{ boardgame.number_of_players }}</p>
         <p class="property">Kesto: {{ boardgame.duration }} min</p>
         <p class="property">Luokka: {{ boardgame.category }}</p>
@@ -32,6 +35,20 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <button type="submit">Muokkaa peliä</button>
     <form>
+    {% endif %}
+</div>
+<div class="reviews">
+    {% if reviews %}
+        {% for review in reviews %}
+            <div class="review">
+                <div class="header">
+                    <div class="avatar"></div>
+                    <p class="reviewer">{{ review.user }}</p>
+                    {{ stars(review.stars, review.half_star, "boardgame-page-review-stars") }}
+                </div>
+                <p class="text">{{ review.text }}</p>
+            </div>
+        {% endfor %}
     {% endif %}
 </div>
 {% endblock %}

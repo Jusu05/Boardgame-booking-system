@@ -1,3 +1,17 @@
+{% macro stars(n, half_star, class) -%}
+    <div class="{{ class }}">
+        {% for _ in range(n) %}
+            <p class="star">★</p>
+        {% endfor %}
+        {% if half_star %}
+            <p class="star">⯪</p>
+        {% endif %}
+        {% for _ in range(5 - n - (1 if half_star else 0)) %}
+            <p class="star">☆</p>
+        {% endfor %}
+    </div>
+{%- endmacro %}
+
 <!DOCTYPE html>
 <html lang="fi">
 <head>
