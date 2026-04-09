@@ -1,5 +1,5 @@
 import sqlite3, os
-from datatypes import Boardgame, BoardgameCategory, User
+from datatypes import Boardgame, Review, User
 
 class SqlConnection:
     def __init__(self, file: str) -> None:
@@ -103,62 +103,77 @@ def get_boardgame_by_name(boardgame_name: str) -> Boardgame | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read("""
         SELECT
-            number_of_players,
-            duration,
-            id,
-            description,
-            category_id,
-            free_games,
-            reserved_games
-        FROM Boardgames
-        WHERE name = ?;
+            b.number_of_players,
+            b.duration,
+            b.id,
+            b.description,
+            b.free_games,
+            b.reserved_games,
+            c.category,
+            CAST(AVG(r.rating) AS INTEGER) AS stars,
+            IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
+        FROM Boardgames b
+        LEFT JOIN Categories c ON b.category_id == c.id
+        LEFT JOIN Ratings r ON r.boardgame_id == b.id
+        WHERE name = ?
+        GROUP BY b.id;
         """,
         (boardgame_name,)
     )
 
     if len(result) > 0:
-        return Boardgame(boardgame_name, result[0][0], result[0][1], result[0][2], result[0][3], result[0][4], result[0][5], result[0][6])
+        return Boardgame(boardgame_name, result[0][0], result[0][1], result[0][2], result[0][3], result[0][4], result[0][5], category=result[0][6], stars=result[0][7], half_star=bool(result[0][8]))
     return None
 
 def get_all_boardgames() -> list[Boardgame] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read("""
         SELECT
-            name,
-            number_of_players,
-            duration,
-            id,
-            description,
-            category_id,
-            free_games,
-            reserved_games
-        FROM Boardgames;
+            b.name,
+            b.number_of_players,
+            b.duration,
+            b.id,
+            b.description,
+            b.free_games,
+            b.reserved_games,
+            c.category,
+            CAST(AVG(r.rating) AS INTEGER) AS stars,
+            IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
+        FROM Boardgames b
+        LEFT JOIN Categories c ON b.category_id == c.id
+        LEFT JOIN Ratings r ON r.boardgame_id == b.id
+        GROUP BY b.id;
         """
     )
     if len(result) > 0:
-        return list(map(lambda result: Boardgame(result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7]), result))
+        return list(map(lambda result: Boardgame(result[0], result[1], result[2], result[3], result[4], result[5], result[6], category=result[7], stars=result[8], half_star=bool(result[9])), result))
     return None
 
 def get_all_boardgames_by_search_word(search_word: str) -> list[Boardgame] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read("""
         SELECT
-            name,
-            number_of_players,
-            duration,
-            id,
-            description,
-            category_id,
-            free_games,
-            reserved_games
-        FROM Boardgames;
-        WHERE name LIKE ?;""",
-         (f"%{search_word}%", )
+            b.name,
+            b.number_of_players,
+            b.duration,
+            b.id,
+            b.description,
+            b.free_games,
+            b.reserved_games,
+            c.category,
+            CAST(AVG(r.rating) AS INTEGER) AS stars,
+            IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
+        FROM Boardgames b
+        LEFT JOIN Categories c ON b.category_id == c.id
+        LEFT JOIN Ratings r ON r.boardgame_id == b.id
+        WHERE b.name LIKE ?
+        GROUP BY b.id;
+        """,
+        (f"%{search_word}%", )
     )
 
     if len(result) > 0:
-        return list(map(lambda result: Boardgame(result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7]), result))
-
+        return list(map(lambda result: Boardgame(result[0], result[1], result[2], result[3], result[4], result[5], result[6], category=result[7], stars=result[8], half_star=bool(result[9])), result))
     return None
 
 def get_boardgame_categories() -> list[tuple[int, str]] | None:
@@ -166,8 +181,26 @@ def get_boardgame_categories() -> list[tuple[int, str]] | None:
     result = conn.read("""
         SELECT id, category
         FROM Categories
-        ORDER BY CASE WHEN id == 0 THEN 1 ELSE 0 END, id
+        ORDER BY IIF(id == 0, 1, 0), id
     """)
     if len(result) > 0:
         return result
+    return None
+
+def get_reviews_by_boardgame_id(id: int) -> list[Review] | None:
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    result = conn.read("""
+        SELECT
+            u.username,
+            r.review,
+            r.rating,
+            CAST(r.rating AS INTEGER) AS stars,
+            IIF(r.rating - FLOOR(r.rating) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
+            u.avatar
+        FROM Ratings r
+        LEFT JOIN Users u ON u.id == r.user_id
+        WHERE r.boardgame_id == ?
+    """, (id, ))
+    if len(result) > 0:
+        return list(map(lambda result: Review(result[0], result[1], result[2], result[3], result[4], result[5]), result))
     return None

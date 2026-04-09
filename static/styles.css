@@ -5,7 +5,6 @@
 
 .nav-inner {
     margin: 0 auto;
-    width: min(800px, calc(100% - 24px));
     display: flex;
     align-items: center;
     gap: 1rem;
@@ -94,7 +93,7 @@
 }
 
 .boardgame-title {
-    margin: 2px 0 10px 0;
+    margin: 0 0 0 0;
     font-size: 40px;
     font-weight: 700;
     line-height: 1;
@@ -135,6 +134,62 @@
     background: black;
 }
 
-.boardgame-image-selector .dot.inactive {
+.boardgame-image-selector .dot .inactive {
     opacity: 0.25;
+}
+
+.reviews {
+    margin-top: 1.25rem;
+}
+
+.review {
+    max-width: 510px;
+    border: 0.5px solid black;
+    border-radius: 50;
+    padding: 1.25rem;
+}
+
+.review .header {
+   display: flex;
+   align-items: center;
+   gap: 12px;
+   margin-bottom: 12px;
+}
+
+.review .avatar {
+   width: 44px;
+   height: 44px;
+   border-radius: 50%;
+   border: 2px solid #000;
+   flex-shrink: 0;
+}
+
+.review .reviewer {
+   font-weight: 500;
+   font-size: 16px;
+   margin: 0;
+}
+
+.review .text {
+   font-size: 14px;
+   line-height: 1.6;
+}
+
+.star {
+    margin: 0;
+    padding: 0;
+}
+
+.boardgame-page-review-stars {
+    display: flex;
+}
+
+.boardgame-page-heading-stars {
+    display: flex;
+    font-size: 30px;
+}
+
+.boardgame-card-stars {
+    display: flex;
+    font-size: 20px;
 }
