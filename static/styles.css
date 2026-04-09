@@ -1,5 +1,12 @@
+:root {
+    --text: black;
+    --background: white;
+    --text-input: #555;
+    --border-color: black;
+}
+
 .nav-header {
-    border-bottom: 1px solid black;
+    border-bottom: var(--border-color);
     margin-bottom: 0.25rem;
 }
 
@@ -13,7 +20,7 @@
 .brand {
     font-weight: 700;
     font-size: 1.05rem;
-    color: black;
+    color: var(--text);
     text-decoration-line: none;
     margin-bottom: 0.25rem;
 }
@@ -37,8 +44,8 @@
     text-decoration-line: none;
     border-radius: 6px;
     font-size: 0.92rem;
-    color: black;
-    border: 1px solid black;
+    color: var(--text);
+    border: 1px solid var(--border-color);
     margin-bottom: 0.25rem;
 }
 
@@ -50,9 +57,9 @@
     padding: 5px;
     gap: 20px;
     box-sizing: border-box;
-    border: 2px solid #000;
-    color: #000;
-    background: #fff;
+    border: 2px solid var(--border-color);
+    color: var(--text);
+    background: var(--background);
 }
 
 .boardgame-card:hover {
@@ -68,7 +75,7 @@
 .boardgame-thumb {
     width: 220px;
     height: 220px;
-    border: 2px solid #000;
+    border: 2px solid var(--border-color);
     border-radius: 18px;
     box-sizing: border-box;
     flex: 0 0 auto;
@@ -93,7 +100,7 @@
 }
 
 .boardgame-title {
-    margin: 0 0 0 0;
+    margin: 0;
     font-size: 40px;
     font-weight: 700;
     line-height: 1;
@@ -111,9 +118,9 @@
 .boardgame-image {
     width: 500px;
     height: 500px;
-    border: 1.5px solid #aaa;
+    border: 1.5px solid var(--border-color);
     border-radius: 20px;
-    background: #fff;
+    background: var(--background);
 }
 
 .boardgame-image-selector {
@@ -131,10 +138,10 @@
     width: 9px;
     height: 9px;
     border-radius: 50%;
-    background: black;
+    background: var(--text);
 }
 
-.boardgame-image-selector .dot .inactive {
+.boardgame-image-selector .dot.inactive {
     opacity: 0.25;
 }
 
@@ -144,7 +151,7 @@
 
 .review {
     max-width: 510px;
-    border: 0.5px solid black;
+    border: 0.5px solid var(--border-color);
     border-radius: 50;
     padding: 1.25rem;
 }
@@ -160,7 +167,7 @@
    width: 44px;
    height: 44px;
    border-radius: 50%;
-   border: 2px solid #000;
+   border: 2px solid var(--border-color);
    flex-shrink: 0;
 }
 
