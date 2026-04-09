@@ -89,7 +89,7 @@
 }
 
 .boardgame-info .property{
-    margin: 6px 0;
+    margin-top: 6px;
     font-size: 16px;
 }
 
@@ -152,7 +152,7 @@
 .review {
     max-width: 510px;
     border: 0.5px solid var(--border-color);
-    border-radius: 50;
+    border-radius: 20px;
     padding: 1.25rem;
 }
 
@@ -199,4 +199,92 @@
 .boardgame-card-stars {
     display: flex;
     font-size: 20px;
+}
+
+.boardgame-page-edit-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+input[type="text"] {
+    appearance: none;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--border-color);
+    border-radius: 0;
+    font-size: 16px;
+    color: var(--text-input);
+    outline: none;
+}
+
+input[type="number"] {
+    -webkit-appearance: none;
+    appearance: none;
+    -moz-appearance: textfield;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--border-color);
+    border-radius: 0;
+    font-size: 16px;
+    color: var(--text-input);
+    outline: none;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.player-number-input {
+    width: 20px;
+}
+
+.boardgame-duration-input {
+    width: 30px;
+}
+
+.boardgame-title-input {
+    font-size: 50px;
+    font-weight: 700;
+    width: 300px;
+}
+
+.description-input {
+    width: 400px;
+    margin-top: 6px;
+}
+
+.selector-wrapper {
+    position: relative;
+    width: 180px;
+}
+
+select {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid var(--border-color);
+    border-radius: 0;
+    font-size: 16px;
+    color: var(--border-color);
+    width: 100%;
+    outline: none;
+    cursor: pointer;
+}
+
+.selector-wrapper::after {
+    content: '';
+    display: block;
+    position: absolute;
+    right: 8px;
+    bottom: 11px;
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid #000;
+    border-bottom: 2px solid #000;
+    transform: rotate(45deg);
+    pointer-events: none;
 }

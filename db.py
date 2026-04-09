@@ -195,7 +195,7 @@ def get_reviews_by_boardgame_id(id: int) -> list[Review] | None:
             r.review,
             r.rating,
             CAST(r.rating AS INTEGER) AS stars,
-            IIF(r.rating - FLOOR(r.rating) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
+            IIF(r.rating - FLOOR(r.rating) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star,
             u.avatar
         FROM Ratings r
         LEFT JOIN Users u ON u.id == r.user_id
