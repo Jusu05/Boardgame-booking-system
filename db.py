@@ -181,16 +181,17 @@ def get_boardgame_categories() -> list[tuple[int, str]] | None:
     result = conn.read("""
         SELECT id, category
         FROM Categories
-        ORDER BY IIF(id == 0, 1, 0), id
+        ORDER BY IIF(id == 0, 1, 0), id;
     """)
     if len(result) > 0:
         return result
     return None
 
-def get_reviews_by_boardgame_id(id: int) -> list[Review] | None:
+def get_reviews_by_boardgame_id(boardgame_id: int) -> list[Review] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read("""
         SELECT
+            u.id,
             u.username,
             r.review,
             r.rating,
@@ -199,8 +200,22 @@ def get_reviews_by_boardgame_id(id: int) -> list[Review] | None:
             u.avatar
         FROM Ratings r
         LEFT JOIN Users u ON u.id == r.user_id
-        WHERE r.boardgame_id == ?
-    """, (id, ))
+        WHERE r.boardgame_id == ?;
+    """, (boardgame_id, ))
     if len(result) > 0:
-        return list(map(lambda result: Review(result[0], result[1], result[2], result[3], result[4], result[5]), result))
+        return list(map(lambda result: Review(User(result[0], result[1], None), result[2], result[3], result[4], result[5], result[6]), result))
     return None
+
+def upsert_review(boardgame_id: int, review: Review):
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    conn.write("""
+        INSERT INTO Ratings (boardgame_id, user_id, rating, review)
+        VALUES(?, ?, ?, ?)
+        ON CONFLICT(boardgame_id, user_id) DO UPDATE SET
+            rating = excluded.rating,
+            review = excluded.review
+        WHERE excluded.boardgame_id == Ratings.boardgame_id AND
+            excluded.user_id == Ratings.user_id;
+    """,
+    (boardgame_id, review.user.id, review.rating, review.text)
+    )

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from security import UserMixin
+from security import UserMixin, current_user
 
 
 @dataclass
@@ -35,13 +35,20 @@ class Boardgame:
 
 
 class Review:
-    def __init__(self, user: str, text: str | None, rating: float, stars: int | None, half_star: bool | None, user_avatar):
+    def __init__(self, user: User, text: str | None, rating: float, stars: int | None = None, half_star: bool | None = None, user_avatar = None):
         self.user = user
         self.user_avatar = user_avatar
         self.text = text
         self.rating = rating
         self.stars = stars
         self.half_star = half_star
+
+    def from_form(form) -> 'Review':
+        return Review(
+            current_user,
+            form["text"],
+            float(form["rating"])
+        )
 
     def __add__(self, other) -> float:
         if isinstance(other, Review):
