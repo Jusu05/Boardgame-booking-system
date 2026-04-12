@@ -8,11 +8,10 @@
         {% if boardgame %}
             <div class="boardgame-tools">
                 {% if username %}
-                <form method="POST">
+                <form action="/boardgame/{{ boardgame.name }}/edit" method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <input type="hidden" name="edit" value=""/>
                     <button class="edit-button" type="submit">✎</button>
-                <form>
+                </form>
                 {% endif %}
             </div>
         {% endif %}
@@ -34,15 +33,19 @@
         {% if boardgame %}
             <h1 class="boardgame-title">{{ boardgame.name }}</h1>
         {% else %}
-            <input type="text" class="boardgame-title-input" name="name">
         {% endif %}
         {% if boardgame and boardgame.stars %}
-            {{ stars(boardgame.stars, boardgame.half_star, "boardgame-page-heading-stars") }}
+        {{ stars(boardgame.stars, boardgame.half_star, "boardgame-page-heading-stars") }}
         {% endif %}
         {% if boardgame_categories %}
-            {% if boardgame %}<form>{% endif %}
+            {% if boardgame %}
+                <form action="/boardgame/{{ boardgame.name }}/update" method="POST">
+                    <input type="hidden" name="name" value="{{ boardgame.name }}">
+            {% else %}
+                <form method="POST">
+                    <input type="text" class="boardgame-title-input" name="name">
+            {% endif %}
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <input type="hidden" name="update" value=""/>
                 <div class="boardgame-page-edit-row">
                     <p class="property">Pelaaja määrä:</p>
                     <input type="number" class="player-number-input" name="number_of_players" placeholder={% if boardgame %} {{ boardgame.number_of_players }} {% else %} 4 required {% endif %}>
@@ -67,12 +70,13 @@
                         </select>
                     </div>
                 </div>
-                <textarea name="description" class="description-input">{% if boardgame %} {{ boardgame.description }} {% endif %}</textarea>
+                <textarea name="description" class="description-input">{% if boardgame %}{{ boardgame.description }}{% endif %}</textarea>
                 <div class="boardgame-page-edit-row" style="margin-top: 6px;">
                     <button type="submit">✓</button>
                 </form>
-                <form>
+                <form method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="hidden" name="cancel">
                     <button type="submit">✖</button>
                 </form>
                 </div>
@@ -86,12 +90,32 @@
 
 </div>
 <div class="reviews">
+    {% if username and not boardgame_categories %}
+        <div class="review">
+            <form action="/boardgame/{{ boardgame.name }}/review" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="header">
+                    <p class="reviewer">Arvostele: </p>
+                    <div class="input-stars">
+                        {% for i in range(5) %}
+                            <input id="star-{{ i }}-left" type="radio" name="rating", value={{ i+0.5 }}>
+                            <input id="star-{{ i }}-right" type="radio" name="rating", value={{ i+1 }}>
+                            <label for="star-{{ i }}-left" class="left"></label>
+                            <label for="star-{{ i }}-right" class="right"></label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <input type="text" class="boardgame-review-input" name="text" placeholder="Arvostelu">
+                <button type="submit">✓</button>
+            </form>
+        </div>
+    {% endif %}
     {% if reviews %}
         {% for review in reviews %}
             <div class="review">
                 <div class="header">
                     <div class="avatar"></div>
-                    <p class="reviewer">{{ review.user }}</p>
+                    <p class="reviewer">{{ review.user.username }}</p>
                     {{ stars(review.stars, review.half_star, "boardgame-page-review-stars") }}
                 </div>
                 <p class="text">{{ review.text }}</p>

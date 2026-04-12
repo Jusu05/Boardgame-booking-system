@@ -3,6 +3,8 @@
     --background: white;
     --text-input: #555;
     --border-color: black;
+    --star-input-width: 18px;
+    --star-input-background: #ccc;
 }
 
 .nav-header {
@@ -154,6 +156,7 @@
     border: 0.5px solid var(--border-color);
     border-radius: 20px;
     padding: 1.25rem;
+    margin-bottom: 0.25rem;
 }
 
 .review .header {
@@ -207,6 +210,7 @@
     gap: 5px;
 }
 
+input[type="password"],
 input[type="text"] {
     appearance: none;
     background: transparent;
@@ -287,4 +291,50 @@ select {
     border-bottom: 2px solid #000;
     transform: rotate(45deg);
     pointer-events: none;
+}
+
+.input-stars { 
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+}
+
+.input-stars input[type=radio] { 
+    display: none;
+}
+
+.input-stars label {
+    width: calc(var(--star-input-width)/2);
+    height: var(--star-input-width);
+    position: relative;
+    cursor: pointer;
+}
+
+.input-stars label::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--star-input-width);
+    height: var(--star-input-width);
+    clip-path: polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+    background: var(--star-input-background);
+}
+
+.input-stars label.left { 
+    overflow: hidden; 
+}
+
+.input-stars label.right {
+    overflow: hidden;
+}
+
+.input-stars label.left::before {
+    left: calc(var(--star-input-width)/-2);
+}
+
+.input-stars input:checked ~ label::before,
+.input-stars label:hover::before,
+.input-stars label:hover ~ label::before {
+    background: var(--text);
 }

@@ -4,10 +4,10 @@ import os
 
 from db import insert_user, get_user_by_id, get_user_by_username, \
     insert_boardgame, update_boardgame, get_all_boardgames, get_boardgame_by_name, get_all_boardgames_by_search_word, get_boardgame_categories, \
-    get_reviews_by_boardgame_id
+    upsert_review, get_reviews_by_boardgame_id
 from security import CSRFProtect, LoginManager, login_user, login_required, logout_user, current_user
 from env_parser import load_dotenv
-from datatypes import Boardgame
+from datatypes import Review, Boardgame
 
 load_dotenv()
 
@@ -75,19 +75,27 @@ def logout():
     return redirect("/")
 
 @app.route("/boardgame/<boardgame_name>", methods=["GET", "POST"])
+@app.route("/boardgame/<boardgame_name>/edit", methods=["GET", "POST"])
+@app.route("/boardgame/<boardgame_name>/update", methods=["GET", "POST"])
+@app.route("/boardgame/<boardgame_name>/review", methods=["GET", "POST"])
 def boardgame(boardgame_name: str):
     boardgame = get_boardgame_by_name(boardgame_name)
-    reviews = get_reviews_by_boardgame_id(boardgame.id)
-
     if boardgame:
         if request.method == "POST":
-            if "edit" in request.form:
-                boardgame_categories = get_boardgame_categories()
-                return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, boardgame_categories=boardgame_categories)
-            elif "update" in request.form:
-                boardgame = Boardgame.from_form(request.form)
-                update_boardgame(boardgame)
+            if current_user.is_authenticated:
+                if request.path.endswith("edit"):
+                    boardgame_categories = get_boardgame_categories()
+                    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, boardgame_categories=boardgame_categories)
+                elif request.path.endswith("update"):
+                    boardgame = Boardgame.from_form(request.form)
+                    update_boardgame(boardgame)
+                elif request.path.endswith("review"):
+                    review = Review.from_form(request.form)
+                    upsert_review(boardgame.id, review)
+            else:
+                pass
 
+        reviews = get_reviews_by_boardgame_id(boardgame.id)
         return render_template("boardgame.html", boardgame=boardgame, reviews=reviews)
 
 @app.route("/add_boardgame", methods=["GET", "POST"])
