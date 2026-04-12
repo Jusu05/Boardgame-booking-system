@@ -4,11 +4,11 @@ from datatypes import Boardgame, Review, User
 class SqlConnection:
     def __init__(self, file: str) -> None:
         self._file = file
+        self.write("PRAGMA foreign_keys = ON;")
 
     def write(self, command: str, params: tuple = None):
         connection = sqlite3.connect(self._file)
         cursor = connection.cursor()
-
         if params:
             cursor.execute(command, params)
         else:
@@ -33,7 +33,7 @@ class SqlConnection:
 
 def get_user_by_id(user_id: int) -> User | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    user = conn.read("SELECT username, password FROM Users WHERE id = ?;", (user_id, ))
+    user = conn.read("SELECT username, password FROM users WHERE id = ?;", (user_id, ))
 
     if len(user) > 0:
         return User(user_id, user[0][0], user[0][1])
@@ -42,7 +42,7 @@ def get_user_by_id(user_id: int) -> User | None:
 
 def get_user_by_username(username: str) -> User | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    user = conn.read("SELECT id, password FROM Users WHERE username = ?;", (username, ))
+    user = conn.read("SELECT id, password FROM users WHERE username = ?;", (username, ))
 
     if len(user) > 0:
         return User(user[0][0], username, user[0][1])
@@ -53,11 +53,11 @@ def insert_user(username: str, password: str):
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     if len(username) > 100:
         raise ValueError("username is longer than 100 character")
-    conn.write("INSERT INTO Users (username, password) VALUES (?,?);", (username, password))
+    conn.write("INSERT INTO users (username, password) VALUES (?,?);", (username, password))
 
 def add_avatar(user_id: int, avatar):
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    conn.write("UPDATE Users SET avatar = ? WHERE id = ?;", (avatar, user_id))
+    conn.write("UPDATE users SET avatar = ? WHERE id = ?;", (avatar, user_id))
 
 def insert_boardgame(boardgame: Boardgame):
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
@@ -75,10 +75,10 @@ def insert_boardgame(boardgame: Boardgame):
     
     if boardgame.free_games:
         values.append(boardgame.free_games)
-        conn.write("INSERT INTO Boardgames (name, description, number_of_players, duration, category_id, free_games) VALUES (?,?,?,?,?,?);", tuple(values))
+        conn.write("INSERT INTO boardgames (name, description, number_of_players, duration, category_id, free_games) VALUES (?,?,?,?,?,?);", tuple(values))
         return
 
-    conn.write("INSERT INTO Boardgames (name, description, number_of_players, duration, category_id) VALUES (?,?,?,?,?);", tuple(values))
+    conn.write("INSERT INTO boardgames (name, description, number_of_players, duration, category_id) VALUES (?,?,?,?,?);", tuple(values))
 
 def update_boardgame(boardgame: Boardgame):
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
@@ -97,7 +97,7 @@ def update_boardgame(boardgame: Boardgame):
         boardgame.id
     )
     
-    conn.write("UPDATE Boardgames SET name = ?, description = ?, number_of_players = ?, duration = ?, category_id = ?, free_games = ? - reserved_games WHERE id = ?;", values)
+    conn.write("UPDATE boardgames SET name = ?, description = ?, number_of_players = ?, duration = ?, category_id = ?, free_games = ? - reserved_games WHERE id = ?;", values)
 
 def get_boardgame_by_name(boardgame_name: str) -> Boardgame | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
@@ -112,9 +112,9 @@ def get_boardgame_by_name(boardgame_name: str) -> Boardgame | None:
             c.category,
             CAST(AVG(r.rating) AS INTEGER) AS stars,
             IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
-        FROM Boardgames b
-        LEFT JOIN Categories c ON b.category_id == c.id
-        LEFT JOIN Ratings r ON r.boardgame_id == b.id
+        FROM boardgames b
+        LEFT JOIN categories c ON b.category_id == c.id
+        LEFT JOIN ratings r ON r.boardgame_id == b.id
         WHERE name = ?
         GROUP BY b.id;
         """,
@@ -139,9 +139,9 @@ def get_all_boardgames() -> list[Boardgame] | None:
             c.category,
             CAST(AVG(r.rating) AS INTEGER) AS stars,
             IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
-        FROM Boardgames b
-        LEFT JOIN Categories c ON b.category_id == c.id
-        LEFT JOIN Ratings r ON r.boardgame_id == b.id
+        FROM boardgames b
+        LEFT JOIN categories c ON b.category_id == c.id
+        LEFT JOIN ratings r ON r.boardgame_id == b.id
         GROUP BY b.id;
         """
     )
@@ -163,9 +163,9 @@ def get_all_boardgames_by_search_word(search_word: str) -> list[Boardgame] | Non
             c.category,
             CAST(AVG(r.rating) AS INTEGER) AS stars,
             IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
-        FROM Boardgames b
-        LEFT JOIN Categories c ON b.category_id == c.id
-        LEFT JOIN Ratings r ON r.boardgame_id == b.id
+        FROM boardgames b
+        LEFT JOIN categories c ON b.category_id == c.id
+        LEFT JOIN ratings r ON r.boardgame_id == b.id
         WHERE b.name LIKE ?
         GROUP BY b.id;
         """,
@@ -180,7 +180,7 @@ def get_boardgame_categories() -> list[tuple[int, str]] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read("""
         SELECT id, category
-        FROM Categories
+        FROM categories
         ORDER BY IIF(id == 0, 1, 0), id;
     """)
     if len(result) > 0:
@@ -198,8 +198,8 @@ def get_reviews_by_boardgame_id(boardgame_id: int) -> list[Review] | None:
             CAST(r.rating AS INTEGER) AS stars,
             IIF(r.rating - FLOOR(r.rating) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star,
             u.avatar
-        FROM Ratings r
-        LEFT JOIN Users u ON u.id == r.user_id
+        FROM ratings r
+        LEFT JOIN users u ON u.id == r.user_id
         WHERE r.boardgame_id == ?;
     """, (boardgame_id, ))
     if len(result) > 0:
@@ -209,13 +209,13 @@ def get_reviews_by_boardgame_id(boardgame_id: int) -> list[Review] | None:
 def upsert_review(boardgame_id: int, review: Review):
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     conn.write("""
-        INSERT INTO Ratings (boardgame_id, user_id, rating, review)
+        INSERT INTO ratings (boardgame_id, user_id, rating, review)
         VALUES(?, ?, ?, ?)
         ON CONFLICT(boardgame_id, user_id) DO UPDATE SET
             rating = excluded.rating,
             review = excluded.review
-        WHERE excluded.boardgame_id == Ratings.boardgame_id AND
-            excluded.user_id == Ratings.user_id;
+        WHERE excluded.boardgame_id == ratings.boardgame_id AND
+            excluded.user_id == ratings.user_id;
     """,
     (boardgame_id, review.user.id, review.rating, review.text)
     )
