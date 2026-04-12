@@ -29,7 +29,6 @@ class Boardgame:
             form["number_of_players"],
             form["duration"],
             description=form["description"],
-            free_games=form["free_games"],
             category_id=form["category_id"],
         )
 

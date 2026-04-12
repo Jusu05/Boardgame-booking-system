@@ -12,6 +12,26 @@
     </div>
 {%- endmacro %}
 
+{% macro plus_minus_number_input(n, plus_action, minus_action) -%}
+    <div style="display: flex;">
+
+        <form action="{{ plus_action }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="plus"/>
+            <button type="submit">+</button>
+        </form>
+
+        <p>{{n}}</p>
+
+        <form action="{{ minus_action }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="minus"/>
+            <button type="submit">-</button>
+        </form>
+
+    </div>
+{%- endmacro %}
+
 <!DOCTYPE html>
 <html lang="fi">
 <head>

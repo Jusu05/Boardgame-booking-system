@@ -1,5 +1,6 @@
 import sqlite3, os
 from datatypes import Boardgame, Review, User
+from security import current_user
 
 class SqlConnection:
     def __init__(self, file: str) -> None:
@@ -59,45 +60,98 @@ def add_avatar(user_id: int, avatar):
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     conn.write("UPDATE users SET avatar = ? WHERE id = ?;", (avatar, user_id))
 
-def insert_boardgame(boardgame: Boardgame):
+def get_users_game_count_by_boardgame_id(boardgame_id: int):
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    result = conn.read("""
+        SELECT user_games, reserved_user_games
+        FROM users_boardgames
+        WHERE boardgame_type == ?;
+    """, (boardgame_id,))
+    if len(result) > 0:
+        return result[0]
+    return (1, 0)
+
+def insert_boardgame(boardgame: Boardgame, users_game: int = None):
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     if not boardgame.category_id:
         raise ValueError("Boardgame does not have category")
     if len(boardgame.name) > 100:
         raise ValueError("Boardgame's name is longer than 100 character")
-    values = [
-        boardgame.name,
-        boardgame.description,
-        boardgame.number_of_players,
-        boardgame.duration,
-        boardgame.category_id
-    ]
-    
-    if boardgame.free_games:
-        values.append(boardgame.free_games)
-        conn.write("INSERT INTO boardgames (name, description, number_of_players, duration, category_id, free_games) VALUES (?,?,?,?,?,?);", tuple(values))
-        return
 
-    conn.write("INSERT INTO boardgames (name, description, number_of_players, duration, category_id) VALUES (?,?,?,?,?);", tuple(values))
-
-def update_boardgame(boardgame: Boardgame):
-    conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    if not boardgame.category_id:
-        raise ValueError("Boardgame does not have category")
-    if len(boardgame.name) > 100:
-        raise ValueError("Boardgame's name is longer than 100 character")
-    
     values = (
         boardgame.name,
         boardgame.description,
         boardgame.number_of_players,
         boardgame.duration,
-        boardgame.category_id,
-        boardgame.free_games,
-        boardgame.id
+        boardgame.category_id
+    )
+
+    conn.write("""
+        INSERT INTO
+            boardgames (
+                name,
+                description,
+                number_of_players,
+                duration,
+                category_id
+            )
+        VALUES (?, ?, ?, ?, ?);
+        """, values
+    )
+
+    if users_game:
+        conn.write("""
+            INSERT INTO users_boardgames (user_id, boardgame_type, user_games)
+            SELECT ?, b.id, ?
+            FROM boardgames b
+            WHERE b.name = ?
+            """,
+            (current_user.id, users_game, boardgame.name)
+        )
+    else:
+        conn.write("""
+            INSERT INTO users_boardgames (user_id, boardgame_type)
+            SELECT ?, b.id
+            FROM boardgames b
+            """,
+            (current_user.id,)
+        )
+
+def update_boardgame(boardgame: Boardgame, users_games: int = None):
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    if not boardgame.category_id:
+        raise ValueError("Boardgame does not have category")
+    if len(boardgame.name) > 100:
+        raise ValueError("Boardgame's name is longer than 100 character")
+
+    values = (
+        boardgame.name,
+        boardgame.description,
+        boardgame.number_of_players,
+        boardgame.duration,
+        boardgame.category_id
+    )
+
+    conn.write("""
+        UPDATE boardgames
+        SET name = ?,
+            description = ?,
+            number_of_players = ?,
+            duration = ?,
+            category_id = ?
+        WHERE id = ?;
+        """, values
     )
     
-    conn.write("UPDATE boardgames SET name = ?, description = ?, number_of_players = ?, duration = ?, category_id = ?, free_games = ? - reserved_games WHERE id = ?;", values)
+
+    if users_games:
+        conn.write("""
+            UPDATE users_boardgames
+            SET user_games = ?
+            WHERE user_id = ? AND boardgame_type = ?
+            """,
+            (users_games, current_user.id, boardgame.id)
+        )
 
 def get_boardgame_by_name(boardgame_name: str) -> Boardgame | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
@@ -107,14 +161,15 @@ def get_boardgame_by_name(boardgame_name: str) -> Boardgame | None:
             b.duration,
             b.id,
             b.description,
-            b.free_games,
-            b.reserved_games,
+            SUM(ub.user_games) AS free_games,
+            SUM(ub.reserved_user_games) AS reserved_games,
             c.category,
             CAST(AVG(r.rating) AS INTEGER) AS stars,
             IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
         FROM boardgames b
         LEFT JOIN categories c ON b.category_id == c.id
         LEFT JOIN ratings r ON r.boardgame_id == b.id
+        LEFT JOIN users_boardgames ub ON ub.boardgame_type == b.id
         WHERE name = ?
         GROUP BY b.id;
         """,
@@ -134,14 +189,15 @@ def get_all_boardgames() -> list[Boardgame] | None:
             b.duration,
             b.id,
             b.description,
-            b.free_games,
-            b.reserved_games,
+            SUM(ub.user_games) AS free_games,
+            SUM(ub.reserved_user_games) AS reserved_games,
             c.category,
             CAST(AVG(r.rating) AS INTEGER) AS stars,
             IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
         FROM boardgames b
         LEFT JOIN categories c ON b.category_id == c.id
         LEFT JOIN ratings r ON r.boardgame_id == b.id
+        LEFT JOIN users_boardgames ub ON ub.boardgame_type == b.id
         GROUP BY b.id;
         """
     )
@@ -158,14 +214,15 @@ def get_all_boardgames_by_search_word(search_word: str) -> list[Boardgame] | Non
             b.duration,
             b.id,
             b.description,
-            b.free_games,
-            b.reserved_games,
+            SUM(ub.user_games) AS free_games,
+            SUM(ub.reserved_user_games) AS reserved_games,
             c.category,
             CAST(AVG(r.rating) AS INTEGER) AS stars,
             IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
         FROM boardgames b
         LEFT JOIN categories c ON b.category_id == c.id
         LEFT JOIN ratings r ON r.boardgame_id == b.id
+        LEFT JOIN users_boardgames ub ON ub.boardgame_type == b.id
         WHERE b.name LIKE ?
         GROUP BY b.id;
         """,
@@ -185,7 +242,7 @@ def get_boardgame_categories() -> list[tuple[int, str]] | None:
     """)
     if len(result) > 0:
         return result
-    return None
+    return [(0, "muu")]
 
 def get_reviews_by_boardgame_id(boardgame_id: int) -> list[Review] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
