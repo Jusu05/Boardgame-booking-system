@@ -71,6 +71,13 @@ def get_users_game_count_by_boardgame_id(boardgame_id: int):
         return result[0]
     return (1, 0)
 
+def get_users_boardgames():
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    result = conn.read("SELECT boardgame_type FROM users_boardgames WHERE boardgame_type == ?;", (current_user.id,))
+    if len(result) > 0:
+        return {value[0] for value in result}
+    return None
+
 def insert_boardgame(boardgame: Boardgame, users_game: int = None):
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     if not boardgame.category_id:
