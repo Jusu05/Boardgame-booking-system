@@ -7,11 +7,11 @@
     <div class="boardgame-page-image-column">
         {% if boardgame %}
             <div class="boardgame-tools">
-                {% if username %}
-                <form action="/boardgame/{{ boardgame.name }}/edit" method="POST">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <button class="edit-button" type="submit">✎</button>
-                </form>
+                {% if username and user_boardgame and boardgame.id in user_boardgame %}
+                    <form action="/boardgame/{{ boardgame.name }}/edit" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button class="edit-button" type="submit">✎</button>
+                    </form>
                 {% endif %}
             </div>
         {% endif %}
