@@ -5,6 +5,13 @@ CREATE TABLE IF NOT EXISTS users (
     avatar BLOB
 );
 
+CREATE TABLE IF NOT EXISTS avatars (
+    user_id INTEGER PRIMARY KEY,
+    file_format VARCHAR(100) NOT NULL,
+    avatar BLOB NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+)
+
 CREATE TABLE IF NOT EXISTS users_boardgames (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
@@ -31,8 +38,10 @@ CREATE TABLE IF NOT EXISTS categories (
 );
 
 CREATE TABLE IF NOT EXISTS photos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    boardgame_id INTEGER NOT NULL,
+    boardgame_id INTEGER NOT NULL PRIMARY KEY,
+    id INTEGER NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    file_format VARCHAR(100) NOT NULL,
     photo BLOB NOT NULL,
     FOREIGN KEY (boardgame_id) REFERENCES boardgames(id)
 );
