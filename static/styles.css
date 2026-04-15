@@ -1,8 +1,8 @@
 :root {
-    --text: black;
-    --background: white;
+    --text: #000;
+    --background: #fff;
     --text-input: #555;
-    --border-color: black;
+    --border-color: #000;
     --star-input-width: 18px;
     --star-input-background: #ccc;
 }
@@ -337,4 +337,30 @@ select {
 .input-stars label:hover::before,
 .input-stars label:hover ~ label::before {
     background: var(--text);
+}
+
+.user-page .info {
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    font-size: 16px;
+    color: var(--text);
+    padding: 5px 5px 5px 5px;
+    margin-bottom: 0.25rem;
+    width: 300px;
+}
+
+.user-page .avatar {
+   width: 200px;
+   height: 200px;
+   border-radius: 50%;
+   border: 2px solid var(--border-color);
+}
+
+.user-page .stars {
+    display: flex;
+}
+
+.user-page .user {
+    align-items: center;
+    margin-bottom: 0.25rem;
 }
