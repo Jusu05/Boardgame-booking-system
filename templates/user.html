@@ -1,1 +1,39 @@
-<!-- TODO user profile page -->
+{% extends "base.html" %}
+
+{% block title %}Lautapeli varaamo{% endblock %}
+
+{% block content %}
+<div class="user-page">
+    <div class="user">
+        <h1>{{ user.username }}</h1>
+        <div class="avatar"></div>
+    </div>
+    <div class="info">
+        <h4>Lisäämäsi pelit:</h4>
+        {% if boardgames %}
+            {% for boardgame in boardgames %}
+                <a style="text-decoration-line: none;" href="/boardgame/{{ boardgame.name }}">
+                    <p>{{ boardgame.name }}</p>
+                </a>
+            {% endfor %}
+        {% else %}
+            <p>Et ole lisännyt lautapelejä</p>
+        {% endif %}
+    </div>
+
+    <div class="info">
+        <h4>Tilastoja lautapeli arvioista:</h4>
+        {% if review_stats and review_stats[0] != 0 %}
+            <div style="display: center;">
+                <p>Arvioiden määrä: {{ review_stats[0] }}</p>
+                <div style="display: flex;">
+                    <p>Arvioiden keskiarvo: </p>
+                    {{ stars(review_stats[1], review_stats[2], "stars") }}
+                </div>
+            </div>
+        {% else %}
+            <p>Et ole arvioinut lautapelejä</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

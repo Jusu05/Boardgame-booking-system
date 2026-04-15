@@ -60,7 +60,7 @@ def add_avatar(user_id: int, avatar):
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     conn.write("UPDATE users SET avatar = ? WHERE id = ?;", (avatar, user_id))
 
-def get_users_game_count_by_boardgame_id(boardgame_id: int):
+def get_users_game_count_by_boardgame_id(boardgame_id: int) -> list[int] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read("""
         SELECT user_games, reserved_user_games
@@ -71,7 +71,7 @@ def get_users_game_count_by_boardgame_id(boardgame_id: int):
         return result[0]
     return (1, 0)
 
-def get_users_boardgames():
+def get_user_boardgame_ids() -> set[int] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read("SELECT boardgame_type FROM users_boardgames WHERE boardgame_type == ?;", (current_user.id,))
     if len(result) > 0:
@@ -212,6 +212,31 @@ def get_all_boardgames() -> list[Boardgame] | None:
         return list(map(lambda result: Boardgame(result[0], result[1], result[2], result[3], result[4], result[5], result[6], category=result[7], stars=result[8], half_star=bool(result[9])), result))
     return None
 
+def get_user_boardgames() -> list[Boardgame] | None:
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    result = conn.read("""
+        SELECT
+            b.name,
+            b.number_of_players,
+            b.duration,
+            b.id,
+            b.description,
+            SUM(ub.user_games) AS free_games,
+            SUM(ub.reserved_user_games) AS reserved_games,
+            c.category,
+            CAST(AVG(r.rating) AS INTEGER) AS stars,
+            IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
+        FROM boardgames b
+        LEFT JOIN categories c ON b.category_id == c.id
+        LEFT JOIN ratings r ON r.boardgame_id == b.id
+        LEFT JOIN users_boardgames ub ON ub.boardgame_type == b.id
+        WHERE ub.user_id == ?
+        GROUP BY b.id;
+    """, (current_user.id, ))
+    if len(result) > 0:
+        return list(map(lambda result: Boardgame(result[0], result[1], result[2], result[3], result[4], result[5], result[6], category=result[7], stars=result[8], half_star=bool(result[9])), result))
+    return None
+
 def get_all_boardgames_by_search_word(search_word: str) -> list[Boardgame] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read("""
@@ -268,6 +293,21 @@ def get_reviews_by_boardgame_id(boardgame_id: int) -> list[Review] | None:
     """, (boardgame_id, ))
     if len(result) > 0:
         return list(map(lambda result: Review(User(result[0], result[1], None), result[2], result[3], result[4], result[5], result[6]), result))
+    return None
+
+def get_user_review_stats() -> tuple[int, int, bool] | None:
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    result = conn.read("""
+        SELECT
+            COUNT(r.rating),
+            CAST(SUM(r.rating) AS INTEGER) AS stars,
+            IIF(SUM(r.rating) - FLOOR(SUM(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
+        FROM ratings r
+        LEFT JOIN users u ON u.id == r.user_id
+        WHERE u.id == ?;
+    """, (current_user.id, ))
+    if len(result) > 0:
+        return result[0]
     return None
 
 def upsert_review(boardgame_id: int, review: Review):

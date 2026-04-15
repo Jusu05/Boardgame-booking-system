@@ -4,8 +4,8 @@ import os
 
 from db import insert_user, get_user_by_id, get_user_by_username, \
     insert_boardgame, update_boardgame, get_all_boardgames, get_boardgame_by_name, get_all_boardgames_by_search_word, get_boardgame_categories, \
-    upsert_review, get_reviews_by_boardgame_id, \
-    get_users_game_count_by_boardgame_id, get_users_boardgames
+    get_users_game_count_by_boardgame_id, get_user_boardgame_ids, get_user_boardgames, \
+    upsert_review, get_reviews_by_boardgame_id, get_user_review_stats
 from security import CSRFProtect, LoginManager, login_user, login_required, logout_user, current_user
 from env_parser import load_dotenv
 from datatypes import Review, Boardgame
@@ -75,6 +75,13 @@ def logout():
     logout_user()
     return redirect("/")
 
+@app.route("/user", methods=["GET"])
+@login_required
+def user():
+    boardgames = get_user_boardgames()
+    review_stats = get_user_review_stats()
+    return render_template("user.html", user=current_user, boardgames=boardgames, review_stats=review_stats)
+
 def load_boardgame_context(name: str):
     boardgame = get_boardgame_by_name(name)
     if not boardgame:
@@ -90,7 +97,7 @@ def boardgame(boardgame_name: str):
     context = load_boardgame_context(boardgame_name)
     if not context:
         return redirect("/")
-    return render_template("boardgame.html", boardgame=context["boardgame"], reviews=context["reviews"], users_boardgames=get_users_boardgames())
+    return render_template("boardgame.html", boardgame=context["boardgame"], reviews=context["reviews"], users_boardgames=get_user_boardgame_ids())
 
 @app.route("/boardgame/<boardgame_name>/edit", methods=["GET", "POST"])
 @login_required
