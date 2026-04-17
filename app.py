@@ -1,10 +1,17 @@
-from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, session
+from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, session, Response, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
-from db import insert_user, get_user_by_id, get_user_by_username, \
+try:
+    from PIL import Image
+    PILLOW_IMPORTED = True
+except ImportError:
+    import imghdr
+    PILLOW_IMPORTED = False
+
+from db import insert_user, get_user_by_id, get_user_by_username, get_avatar_by_username, \
     insert_boardgame, update_boardgame, get_all_boardgames, get_boardgame_by_name, get_all_boardgames_by_search_word, get_boardgame_categories, \
-    get_users_game_count_by_boardgame_id, get_user_boardgame_ids, get_user_boardgames, \
+    get_users_game_count_by_boardgame_id, get_user_boardgame_ids, get_user_boardgames, get_boardgame_photo_by_boardgame_name_and_photo_id, \
     upsert_review, get_reviews_by_boardgame_id, get_user_review_stats
 from security import CSRFProtect, LoginManager, login_user, login_required, logout_user, current_user
 from env_parser import load_dotenv
@@ -69,6 +76,11 @@ def create_user():
         return redirect("/")
     return render_template("login.html", login_screen=False)
 
+@app.route("/user/<username>/avatar", methods=["GET"])
+def avatar(username: str):
+    avatar = get_avatar_by_username(username)
+    return Response(avatar.bytes, mimetype=avatar.file_type)
+
 @app.route("/logout")
 @login_required
 def logout():
@@ -103,7 +115,9 @@ def boardgame(boardgame_name: str):
     else:
         users_boardgames = None
 
-    return render_template("boardgame.html", boardgame=context["boardgame"], reviews=context["reviews"], users_boardgames=users_boardgames)
+    photo = get_boardgame_photo_by_boardgame_name_and_photo_id(boardgame_name, 0)
+
+    return render_template("boardgame.html", boardgame=context["boardgame"], reviews=context["reviews"], users_boardgames=users_boardgames, photo=photo)
 
 @app.route("/boardgame/<boardgame_name>/edit", methods=["GET", "POST"])
 @login_required
@@ -161,6 +175,11 @@ def boardgame_minus(boardgame_name: str):
     else:
         session["users_games"] = current
     return render_template("boardgame.html", boardgame=context["boardgame"], reviews=context["reviews"], boardgame_categories=context["boardgame_categories"], n=session["users_games"])
+
+@app.route("/boardgame/<boardgame_name>/photo/<int:id>", methods=["GET"])
+def boardgame_photo(boardgame_name: str, id: int):
+    photo = get_boardgame_photo_by_boardgame_name_and_photo_id(boardgame_name, id)
+    return Response(photo.bytes, mimetype=photo.file_type)
 
 @app.route("/add_boardgame", methods=["GET", "POST"])
 @login_required

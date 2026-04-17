@@ -9,8 +9,16 @@ class User(UserMixin):
     password: str
 
 
+class Photo:
+    def __init__(self, name: str | None, id: int | None, file_type: str, bytes):
+        self.name = name
+        self.id = id
+        self.file_type = file_type
+        self.bytes = bytes
+
+
 class Boardgame:
-    def __init__(self, name: str, number_of_players: int, duration: int, id: int | None = None, description: int | None = None, free_games: int | None = None, reserved_games: int | None = None, category: str | None = None, category_id: int | None = None, stars: int | None = None, half_star: bool | None = None):
+    def __init__(self, name: str, number_of_players: int, duration: int, id: int | None = None, description: int | None = None, free_games: int | None = None, reserved_games: int | None = None, category: str | None = None, category_id: int | None = None, stars: int | None = None, half_star: bool | None = None, number_of_photos: bool | None = None):
         self.name = name
         self.description = description
         self.number_of_players = number_of_players
@@ -22,6 +30,7 @@ class Boardgame:
         self.category_id = category_id
         self.stars = stars
         self.half_star = half_star
+        self.number_of_photos = number_of_photos
 
     def from_form(form) -> 'Boardgame':
         return Boardgame(
@@ -34,9 +43,8 @@ class Boardgame:
 
 
 class Review:
-    def __init__(self, user: User, text: str | None, rating: float, stars: int | None = None, half_star: bool | None = None, user_avatar = None):
+    def __init__(self, user: User, text: str | None, rating: float, stars: int | None = None, half_star: bool | None = None):
         self.user = user
-        self.user_avatar = user_avatar
         self.text = text
         self.rating = rating
         self.stars = stars

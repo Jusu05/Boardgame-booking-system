@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS avatars (
     file_format VARCHAR(100) NOT NULL,
     avatar BLOB NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
-)
+);
 
 CREATE TABLE IF NOT EXISTS users_boardgames (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

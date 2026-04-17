@@ -15,18 +15,27 @@
                 {% endif %}
             </div>
         {% endif %}
-        <div class="boardgame-image"></div>
+        <img class="boardgame-image" src="/boardgame/{{ boardgame.name }}/photo/{{ photo.id }}" alt="{{ photo.name }}">
         <div class="boardgame-image-selector">
-            <svg class="arrow" viewBox="0 0 14 14" fill="none">
-                <polygon points="11,2 2,7 11,12" stroke="black" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
-            </svg>
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot inactive"></div>
-            <div class="dot inactive"></div>
-            <svg class="arrow" viewBox="0 0 14 14" fill="none">
-                <polygon points="3,2 12,7 3,12" stroke="black" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
-            </svg>
+            {% if boardgame and boardgame.number_of_photos > 1%}
+                <form action="/boardgame/{{ boardgame.name }}/next_photo" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="hidden" value={{ photo.number }}>
+                    <button type="submit">◀</button>
+                </form>
+                {% for i in range(boardgame.number_of_photos) %}
+                    {% if i == photo.number %}
+                        <p class="dot">•</p>
+                    {% else %}
+                        <p class="dot inactive">•</p>
+                    {% endif %}
+                {% endfor %}
+                <form action="/boardgame/{{ boardgame.name }}/previous_photo" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="hidden" value={{ photo.number }}>
+                    <button type="submit">▶</button>
+                </form>
+            {% endif %}
         </div>
     </div>
     <div class="boardgame-info">
@@ -122,7 +131,7 @@
         {% for review in reviews %}
             <div class="review">
                 <div class="header">
-                    <div class="avatar"></div>
+                    <img class="avatar" src="/user/{{ review.user.username }}/avatar" alt="{{ review.user.username }} avatar">
                     <p class="reviewer">{{ review.user.username }}</p>
                     {{ stars(review.stars, review.half_star, "boardgame-page-review-stars") }}
                 </div>

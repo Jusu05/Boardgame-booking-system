@@ -16,7 +16,7 @@
     {% for boardgame in boardgames %}
     <a style="text-decoration-line: none;" href="/boardgame/{{ boardgame.name }}">
         <div class="boardgame-card">
-            <div class="boardgame-thumb"></div>
+            <img class="boardgame-thumb" src="/boardgame/{{ boardgame.name }}/photo/0" alt="Lautapelin {{ boardgame.name }} kuva">
             <div class="boardgame-info">
                 <h3 class="boardgame-title">{{ boardgame.name }}</h3>
                 {% if boardgame.stars %}
