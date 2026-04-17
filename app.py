@@ -78,7 +78,7 @@ def logout():
 @app.route("/user", methods=["GET"])
 @login_required
 def user():
-    boardgames = get_user_boardgames()
+    boardgames = get_user_boardgames(current_user.id)
     review_stats = get_user_review_stats()
     return render_template("user.html", user=current_user, boardgames=boardgames, review_stats=review_stats)
 
@@ -97,7 +97,13 @@ def boardgame(boardgame_name: str):
     context = load_boardgame_context(boardgame_name)
     if not context:
         return redirect("/")
-    return render_template("boardgame.html", boardgame=context["boardgame"], reviews=context["reviews"], users_boardgames=get_user_boardgame_ids())
+
+    if current_user.is_authenticated:
+        users_boardgames = get_user_boardgame_ids()
+    else:
+        users_boardgames = None
+
+    return render_template("boardgame.html", boardgame=context["boardgame"], reviews=context["reviews"], users_boardgames=users_boardgames)
 
 @app.route("/boardgame/<boardgame_name>/edit", methods=["GET", "POST"])
 @login_required

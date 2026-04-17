@@ -71,9 +71,9 @@ def get_users_game_count_by_boardgame_id(boardgame_id: int) -> list[int] | None:
         return result[0]
     return (1, 0)
 
-def get_user_boardgame_ids() -> set[int] | None:
+def get_user_boardgame_ids(user_id: int) -> set[int] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    result = conn.read("SELECT boardgame_type FROM users_boardgames WHERE boardgame_type == ?;", (current_user.id,))
+    result = conn.read("SELECT boardgame_type FROM users_boardgames WHERE boardgame_type == ?;", (user_id, ))
     if len(result) > 0:
         return {value[0] for value in result}
     return None
@@ -149,7 +149,6 @@ def update_boardgame(boardgame: Boardgame, users_games: int = None):
         WHERE id = ?;
         """, values
     )
-    
 
     if users_games:
         conn.write("""
@@ -212,7 +211,7 @@ def get_all_boardgames() -> list[Boardgame] | None:
         return list(map(lambda result: Boardgame(result[0], result[1], result[2], result[3], result[4], result[5], result[6], category=result[7], stars=result[8], half_star=bool(result[9])), result))
     return None
 
-def get_user_boardgames() -> list[Boardgame] | None:
+def get_user_boardgames(user_id: int) -> list[Boardgame] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read("""
         SELECT
@@ -226,13 +225,16 @@ def get_user_boardgames() -> list[Boardgame] | None:
             c.category,
             CAST(AVG(r.rating) AS INTEGER) AS stars,
             IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
+            p.name
+            p.id
         FROM boardgames b
         LEFT JOIN categories c ON b.category_id == c.id
         LEFT JOIN ratings r ON r.boardgame_id == b.id
         LEFT JOIN users_boardgames ub ON ub.boardgame_type == b.id
+        LEFT JOIN photos p ON p.boardgame_id = b.id
         WHERE ub.user_id == ?
         GROUP BY b.id;
-    """, (current_user.id, ))
+    """, (user_id, ))
     if len(result) > 0:
         return list(map(lambda result: Boardgame(result[0], result[1], result[2], result[3], result[4], result[5], result[6], category=result[7], stars=result[8], half_star=bool(result[9])), result))
     return None
