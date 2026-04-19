@@ -11,7 +11,7 @@ except ImportError:
 
 from db import insert_user, get_user_by_id, get_user_by_username, get_avatar_by_username, \
     insert_boardgame, update_boardgame, get_all_boardgames, get_boardgame_by_name, get_all_boardgames_by_search_word, get_boardgame_categories, \
-    get_users_game_count_by_boardgame_id, get_user_boardgame_ids, get_user_boardgames, get_boardgame_photo_by_boardgame_name_and_photo_id, \
+    get_users_game_count_by_boardgame_id, get_user_boardgame_ids, get_user_boardgames, get_boardgame_photo_by_boardgame_name_and_photo_id, delete_users_boardgames_by_boardgame_id, set_user_boardgames_to_zero,\
     upsert_review, get_reviews_by_boardgame_id, get_user_review_stats
 from security import CSRFProtect, LoginManager, login_user, login_required, logout_user, current_user
 from env_parser import load_dotenv
@@ -111,22 +111,46 @@ def boardgame(boardgame_name: str):
         return redirect("/")
 
     if current_user.is_authenticated:
-        users_boardgames = get_user_boardgame_ids()
+        users_boardgames = get_user_boardgame_ids(current_user.id)
+        users_has_boardgames = context["boardgame"].id in users_boardgames
     else:
-        users_boardgames = None
+        users_has_boardgames = False
 
     photo = get_boardgame_photo_by_boardgame_name_and_photo_id(boardgame_name, 0)
 
-    return render_template("boardgame.html", boardgame=context["boardgame"], reviews=context["reviews"], users_boardgames=users_boardgames, photo=photo)
+    return render_template("boardgame.html", boardgame=context["boardgame"], reviews=context["reviews"], users_has_boardgames=users_has_boardgames, photo=photo)
 
-@app.route("/boardgame/<boardgame_name>/edit", methods=["GET", "POST"])
+@app.route("/boardgame/<boardgame_name>/edit", methods=["GET"])
 @login_required
 def boardgame_edit(boardgame_name: str):
     context = load_boardgame_context(boardgame_name)
     if not context:
         return redirect("/")
-    user_boardgames, _ = get_users_game_count_by_boardgame_id(context["boardgame"].id)
-    return render_template("boardgame.html", boardgame=context["boardgame"], reviews=context["reviews"], boardgame_categories=context, n=user_boardgames)
+    user_boardgames, _ = get_users_game_count_by_boardgame_id(context["boardgame"].id)    
+    return render_template("boardgame.html", boardgame=context["boardgame"], reviews=context["reviews"], boardgame_categories=context["boardgame_categories"], n=user_boardgames)
+
+@app.route("/boardgame/<boardgame_name>/delete", methods=["GET"])
+@login_required
+def boardgame_delete(boardgame_name: str):
+    context = load_boardgame_context(boardgame_name)
+    if not context:
+        return redirect("/")
+    user_boardgames, reserved_user_boardgames = get_users_game_count_by_boardgame_id(context["boardgame"].id)
+    photo = get_boardgame_photo_by_boardgame_name_and_photo_id(boardgame_name, 0)
+    return render_template("boardgame.html", boardgame=context["boardgame"], reviews=context["reviews"], n=user_boardgames, delete=True, reserved_user_boardgames=reserved_user_boardgames, photo=photo)
+
+@app.route("/boardgame/<boardgame_name>/delete/confirm", methods=["POST"])
+@login_required
+def boardgame_delete_confirm(boardgame_name: str):
+    boardgame = get_boardgame_by_name(boardgame_name)
+    user_boardgames, reserved_user_boardgames = get_users_game_count_by_boardgame_id(boardgame.id)
+    if reserved_user_boardgames > 0:
+        set_user_boardgames_to_zero(current_user.id)
+        return redirect(f"/boardgame/{boardgame.name}")
+    delete_users_boardgames_by_boardgame_id(boardgame.id)
+    if boardgame.free + boardgame.reserved - user_boardgames - reserved_user_boardgames > 0:
+        return redirect(f"/boardgame/{boardgame.name}")
+    return redirect("/")
 
 @app.route("/boardgame/<boardgame_name>/update", methods=["POST"])
 @login_required

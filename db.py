@@ -34,7 +34,7 @@ class SqlConnection:
 
 def get_user_by_id(user_id: int) -> User | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    user = conn.read("SELECT username, password FROM users WHERE id = ?;", (user_id, ))
+    user = conn.read("SELECT username, password FROM users WHERE id = ?;", (user_id,))
 
     if len(user) > 0:
         return User(user_id, user[0][0], user[0][1])
@@ -87,9 +87,21 @@ def get_users_game_count_by_boardgame_id(boardgame_id: int) -> list[int] | None:
         return result[0]
     return (1, 0)
 
+def set_user_boardgames_to_zero(user_id: int):
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    conn.write("""
+        UPDATE users_boardgames
+        SET user_games = 0
+        WHERE user_id == ?;
+    """, (user_id,))
+
+def delete_users_boardgames_by_boardgame_id(boardgame_id: int):
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    conn.write("DELETE FROM user_boardgames WHERE boardgame_id == ?;", (boardgame_id,))
+
 def get_user_boardgame_ids(user_id: int) -> set[int] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    result = conn.read("SELECT boardgame_type FROM users_boardgames WHERE boardgame_type == ?;", (user_id, ))
+    result = conn.read("SELECT boardgame_type FROM users_boardgames WHERE user_id == ?;", (user_id,))
     if len(result) > 0:
         return {value[0] for value in result}
     return None
@@ -222,7 +234,8 @@ def get_all_boardgames() -> list[Boardgame] | None:
         LEFT JOIN categories c ON b.category_id == c.id
         LEFT JOIN ratings r ON r.boardgame_id == b.id
         LEFT JOIN users_boardgames ub ON ub.boardgame_type == b.id
-        GROUP BY b.id;
+        GROUP BY b.id
+        HAVING COALESCE(SUM(ub.user_games), 0) + COALESCE(SUM(ub.reserved_user_games), 0) > 0;
         """
     )
     if len(result) > 0:
@@ -252,7 +265,7 @@ def get_user_boardgames(user_id: int) -> list[Boardgame] | None:
         LEFT JOIN photos p ON p.boardgame_id = b.id
         WHERE ub.user_id == ?
         GROUP BY b.id;
-    """, (user_id, ))
+    """, (user_id,))
     if len(result) > 0:
         return list(map(lambda result: Boardgame(result[0], result[1], result[2], result[3], result[4], result[5], result[6], category=result[7], stars=result[8], half_star=bool(result[9])), result))
     return None
@@ -276,7 +289,8 @@ def get_all_boardgames_by_search_word(search_word: str) -> list[Boardgame] | Non
         LEFT JOIN ratings r ON r.boardgame_id == b.id
         LEFT JOIN users_boardgames ub ON ub.boardgame_type == b.id
         WHERE b.name LIKE ?
-        GROUP BY b.id;
+        ROUP BY b.id
+        HAVING COALESCE(SUM(ub.user_games), 0) + COALESCE(SUM(ub.reserved_user_games), 0) > 0;
         """,
         (f"%{search_word}%", )
     )
