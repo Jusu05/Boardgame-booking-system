@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS avatars (
     user_id INTEGER PRIMARY KEY,
     file_format VARCHAR(100) NOT NULL,
     avatar BLOB NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS users_boardgames (

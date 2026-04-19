@@ -24,8 +24,8 @@ class Boardgame:
         self.number_of_players = number_of_players
         self.duration = duration
         self.id = id
-        self.free_games = free_games
-        self.reserved_games = reserved_games
+        self.free = free_games
+        self.reserved = reserved_games
         self.category = category
         self.category_id = category_id
         self.stars = stars
