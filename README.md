@@ -12,9 +12,9 @@ When user is logged in user can \
 &emsp;&emsp;☑ create, edit, and delete board game \
 &emsp;&emsp;☐ add images of board game to board game \
 &emsp;&emsp;☐ add a avatar \
-&emsp;&emsp;☐ review board game \
+&emsp;&emsp;☑ review board game \
 &emsp;&emsp;☐ reserve available board games and manage their reservations (confirmation, cancellation). \
-&emsp;&emsp;☐ assign one or more classifications to a listing
+&emsp;&emsp;☑ assign one or more classifications to a boardgame
 
 ## Running
 ### Setup
