@@ -38,7 +38,11 @@
                     {% endif %}
                 </div>
             {% endif %}
-            <img class="boardgame-image" src="/boardgame/{{ boardgame.name }}/photo/{{ photo.id }}" alt="{{ photo.name }}">
+            {% if boardgame %}            
+                <img class="boardgame-image" src="/boardgame/{{ boardgame.name }}/photo/{{ photo.id }}" alt="{{ photo.name }}">
+                {% else %}
+                <img class="boardgame-image" src="/boardgame/7617381961/photo/0" alt="{{ photo.name }}">
+            {% endif %}
             <div class="boardgame-image-selector">
                 {% if boardgame and boardgame.number_of_photos > 1%}
                     <form action="/boardgame/{{ boardgame.name }}/next_photo" method="POST">
