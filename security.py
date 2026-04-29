@@ -38,7 +38,7 @@ class AnonymousUser:
 
 
 class LoginManager:
-    def __init__(self, app: Flask = None):
+    def __init__(self, app: Flask):
         self._user_loader_callback = None
         self._unauthorized_callback = None
         self._app = app
@@ -110,7 +110,7 @@ def login_user(user, remember: bool = False) -> bool:
     g._current_user = user
     return True
 
-def logout_user():
+def logout_user() -> None:
     login_manager = _get_login_manager()
     session.pop(login_manager.session_id)
     session.modified = True
@@ -142,7 +142,7 @@ current_user = CurrentUser()
 
 
 class CSRFProtect:
-    def __init__(self, app: Flask, max_age: int = 3600):
+    def __init__(self, app: Flask, max_age: int = 3600) -> None:
         self._app = app
         self._secret = app.secret_key
         self._exempt_endpoints: set[str] = set()

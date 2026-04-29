@@ -50,7 +50,7 @@ def get_user_by_username(username: str) -> User | None:
 
     return None
 
-def insert_user(username: str, password: str):
+def insert_user(username: str, password: str) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     if len(username) > 100:
         raise ValueError("username is longer than 100 character")
@@ -60,7 +60,7 @@ def add_avatar(user_id: int, avatar):
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     conn.write("UPDATE users SET avatar = ? WHERE id = ?;", (avatar, user_id))
 
-def get_avatar_by_username(username: str) -> Photo | None:
+def get_avatar_by_username(username: str) -> Photo:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read("""
         SELECT a.file_format, a.avatar 
@@ -87,7 +87,7 @@ def get_users_game_count_by_boardgame_id(boardgame_id: int) -> list[int] | None:
         return result[0]
     return (1, 0)
 
-def set_user_boardgames_to_zero(user_id: int):
+def set_user_boardgames_to_zero(user_id: int) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     conn.write("""
         UPDATE users_boardgames
@@ -95,7 +95,7 @@ def set_user_boardgames_to_zero(user_id: int):
         WHERE user_id == ?;
     """, (user_id,))
 
-def delete_users_boardgames_by_boardgame_id(boardgame_id: int):
+def delete_users_boardgames_by_boardgame_id(boardgame_id: int) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     conn.write("DELETE FROM user_boardgames WHERE boardgame_id == ?;", (boardgame_id,))
 
@@ -106,7 +106,7 @@ def get_user_boardgame_ids(user_id: int) -> set[int] | None:
         return {value[0] for value in result}
     return None
 
-def insert_boardgame(boardgame: Boardgame, users_game: int = None):
+def insert_boardgame(boardgame: Boardgame, users_game: int = None) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     if not boardgame.category_id:
         raise ValueError("Boardgame does not have category")
@@ -152,7 +152,7 @@ def insert_boardgame(boardgame: Boardgame, users_game: int = None):
             (current_user.id,)
         )
 
-def update_boardgame(boardgame: Boardgame, users_games: int = None):
+def update_boardgame(boardgame: Boardgame, users_games: int = None) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     if not boardgame.category_id:
         raise ValueError("Boardgame does not have category")
@@ -310,7 +310,7 @@ def get_boardgame_categories() -> list[tuple[int, str]] | None:
         return result
     return [(0, "muu")]
 
-def get_boardgame_photo_by_boardgame_name_and_photo_id(name: str, photo_id: int) -> Photo | None:
+def get_boardgame_photo_by_boardgame_name_and_photo_id(name: str, photo_id: int) -> Photo:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read("""
         SELECT p.name, p.id, p.file_format, p.photo
@@ -359,7 +359,7 @@ def get_user_review_stats() -> tuple[int, int, bool] | None:
         return result[0]
     return None
 
-def upsert_review(boardgame_id: int, review: Review):
+def upsert_review(boardgame_id: int, review: Review) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     conn.write("""
         INSERT INTO ratings (boardgame_id, user_id, rating, review)

@@ -10,7 +10,7 @@ class User(UserMixin):
 
 
 class Photo:
-    def __init__(self, name: str | None, id: int | None, file_type: str, bytes):
+    def __init__(self, name: str | None, id: int | None, file_type: str | None, bytes: bytes | None):
         self.name = name
         self.id = id
         self.file_type = file_type

@@ -3,85 +3,67 @@
 {% block title %}Lautapeli varaamo{% endblock %}
 
 {% block content %}
-{% if delete %}
-<div class="confirmation-overlay">
-    <div class="confirmation-box">
-        <h4>Haluatko varmasti poistaa lisäämäsi lautapelit?</h4>
-        {% if reserved_user_boardgames > 0 %}
-            <p>Olet poistamassa {{n}} lisäämäsi peliä. Et voi poistaa enempää pelejäsi, kun ne ovat varattuja</p>
-        {% else %}
-            <p>Olet poistamassa kaikki lisäämäsi pelit järjestelmästä</p>
-        {% endif %}
-        <div style="display: flex; gap: 5px;">
-            <form method="GET" action="/boardgame/{{ boardgame.name }}/confirm">
-                <button type="submit">✓</button>
-            </form>
-            <form method="GET" action="/boardgame/{{ boardgame.name }}">
-                <button type="submit">✖</button>
-            </form>
-        </div>
-    </div>
-</div>
-{% endif %}
-<div style="filter: brightness();">
-    <div class="boardgame-page">
-        <div class="boardgame-page-image-column">
-            {% if boardgame %}
-                <div class="boardgame-tools">
-                    {% if username and users_has_boardgames %}
-                        <form action="/boardgame/{{ boardgame.name }}/edit" method="GET">
-                            <button type="submit">✎</button>
-                        </form>
-                        <form action="/boardgame/{{ boardgame.name }}/delete" method="GET">
-                            <button type="submit">🗑</button>
-                        </form>
-                    {% endif %}
-                </div>
-            {% endif %}
-            {% if boardgame %}            
-                <img class="boardgame-image" src="/boardgame/{{ boardgame.name }}/photo/{{ photo.id }}" alt="{{ photo.name }}">
+<form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    {% if delete %}
+        <div class="confirmation-overlay">
+            <div class="confirmation-box">
+                <h4>Haluatko varmasti poistaa lisäämäsi lautapelit?</h4>
+                {% if reserved_user_boardgames > 0 %}
+                    <p>Olet poistamassa {{n}} lisäämäsi peliä. Et voi poistaa enempää pelejäsi, kun ne ovat varattuja</p>
                 {% else %}
-                <img class="boardgame-image" src="/boardgame/7617381961/photo/0" alt="{{ photo.name }}">
-            {% endif %}
-            <div class="boardgame-image-selector">
-                {% if boardgame and boardgame.number_of_photos > 1%}
-                    <form action="/boardgame/{{ boardgame.name }}/next_photo" method="POST">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <input type="hidden" value={{ photo.number }}>
-                        <button type="submit">◀</button>
-                    </form>
-                    {% for i in range(boardgame.number_of_photos) %}
-                        {% if i == photo.number %}
-                            <p class="dot">•</p>
-                        {% else %}
-                            <p class="dot inactive">•</p>
-                        {% endif %}
-                    {% endfor %}
-                    <form action="/boardgame/{{ boardgame.name }}/previous_photo" method="POST">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <input type="hidden" value={{ photo.number }}>
-                        <button type="submit">▶</button>
-                    </form>
+                    <p>Olet poistamassa kaikki lisäämäsi pelit järjestelmästä</p>
                 {% endif %}
+                <div style="display: flex; gap: 5px;">
+                    <button name="target" value="confirm delete" type="submit">✓</button>
+                    <button name="target" value="cancel" type="submit">✖</button>
+                </div>
             </div>
         </div>
-        <div class="boardgame-info">
-            {% if boardgame %}
-                <h1 class="boardgame-title">{{ boardgame.name }}</h1>
-            {% else %}
-            {% endif %}
-            {% if boardgame and boardgame.stars %}
-                {{ stars(boardgame.stars, boardgame.half_star, "boardgame-page-heading-stars") }}
-            {% endif %}
-            {% if boardgame_categories %}
+    {% endif %}
+    <div style="filter: brightness();">
+        <div class="boardgame-page">
+            <div class="boardgame-page-image-column">
                 {% if boardgame %}
-                    <form action="/boardgame/{{ boardgame.name }}/update" method="POST">
-                        <input type="hidden" name="name" value={{ boardgame.name }}>
-                {% else %}
-                    <form action="/add_boardgame" method="POST">
-                        <input type="text" class="boardgame-title-input" name="name">
+                    <div class="boardgame-tools">
+                        {% if username and users_has_boardgames %}
+                            <button name="target" value="edit" type="submit">✎</button>
+                            <button name="target" value="delete" type="submit">🗑</button>
+                        {% endif %}
+                    </div>
                 {% endif %}
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                {% if boardgame %}            
+                    <img class="boardgame-image" src="/boardgame/{{ boardgame.name }}/photo/{{ photo.id }}" alt="{{ photo.name }}">
+                    {% else %}
+                    <img class="boardgame-image" src="/boardgame/7617381961/photo/0" alt="{{ photo.name }}">
+                {% endif %}
+                <div class="boardgame-image-selector">
+                    {% if boardgame and boardgame.number_of_photos > 1%}
+                        <button name="target" value="next photo" type="submit">◀</button>
+                        {% for i in range(boardgame.number_of_photos) %}
+                            {% if i == photo.number %}
+                                <p class="dot">•</p>
+                            {% else %}
+                                <p class="dot inactive">•</p>
+                            {% endif %}
+                        {% endfor %}
+                        <button name="target" value="previous photo" type="submit">▶</button>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="boardgame-info">
+                {% if boardgame %}
+                    <h1 class="boardgame-title">{{ boardgame.name }}</h1>
+                {% else %}
+                {% endif %}
+                {% if boardgame and boardgame.stars %}
+                    {{ stars(boardgame.stars, boardgame.half_star, "boardgame-page-heading-stars") }}
+                {% endif %}
+                {% if boardgame_categories %}
+                    {% if boardgame %}
+                    {% else %}
+                        <input type="text" class="boardgame-title-input" name="name">
+                    {% endif %}
                     <div class="boardgame-page-edit-row">
                         <p class="property">Pelaaja määrä:</p>
                         <input type="number" class="player-number-input" name="number_of_players" value={% if boardgame %} {{ boardgame.number_of_players }} {% else %} 4 required {% endif %}>
@@ -106,70 +88,56 @@
                             </select>
                         </div>
                     </div>
-                    <textarea name="description" class="description-input">{% if boardgame %}{{ boardgame.description }}{% endif %}</textarea>
-                    <div class="boardgame-page-edit-row" style="margin-top: 6px;">
-                        <button type="submit">✓</button>
-                    </form>
-                    {% if boardgame %}
-                    <form method="POST" action="/boardgame/{{ boardgame.name }}">
-                    {% else %}
-                    <form method="POST" action="/">
-                    {% endif %}
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <input type="hidden" name="cancel">
-                        <button type="submit">✖</button>
-                    </form>
-                    </div>
                     <div class="boardgame-page-edit-row">
                         <p class="property">Lautapelien määrä:</p>
-                        {% if boardgame %}
-                            {{ plus_minus_number_input(n, "/boardgame/"+ boardgame.name +"/plus", "/boardgame/"+ boardgame.name +"/minus") }}
-                            {% else %}
-                            {{ plus_minus_number_input(n, "/add_boardgame/plus", "/add_boardgame/minus") }}
-                        {% endif %}
+                        {{ plus_minus_number_input(n) }}
                     </div>
-            {% else %}
-                <p class="property">Pelaaja määrä: {{ boardgame.number_of_players }}</p>
-                <p class="property">Kesto: {{ boardgame.duration }} min</p>
-                <p class="property">Luokka: {{ boardgame.category }}</p>
-                <p class="description">{{ boardgame.description }}</p>
+                    <textarea name="description" class="description-input">{% if boardgame %}{{ boardgame.description }}{% endif %}</textarea>
+                    <div class="boardgame-page-edit-row" style="margin-top: 6px;">
+                        <button name="target" value="confirm" type="submit">✓</button>
+                        <button name="target" value="cancel" type="submit">✖</button>
+                    </div>
+                {% else %}
+                    <p class="property">Pelaaja määrä: {{ boardgame.number_of_players }}</p>
+                    <p class="property">Kesto: {{ boardgame.duration }} min</p>
+                    <p class="property">Luokka: {{ boardgame.category }}</p>
+                    <p class="description">{{ boardgame.description }}</p>
+                {% endif %}
+            </div>
+
+        </div>
+        <div class="reviews">
+            {% if username and not boardgame_categories %}
+                <div class="review">
+                    <form action="/boardgame/{{ boardgame.name }}/review" method="POST">
+                        <div class="header">
+                            <p class="reviewer">Arvostele: </p>
+                            <div class="input-stars">
+                                {% for i in range(5) %}
+                                    <input id="star-{{ i }}-left" type="radio" name="rating", value={{ i+0.5 }}>
+                                    <input id="star-{{ i }}-right" type="radio" name="rating", value={{ i+1 }}>
+                                    <label for="star-{{ i }}-left" class="left"></label>
+                                    <label for="star-{{ i }}-right" class="right"></label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <input type="text" class="boardgame-review-input" name="text" placeholder="Arvostelu">
+                        <button name="target" value="review" type="submit">✓</button>
+                </div>
+            {% endif %}
+            {% if reviews %}
+                {% for review in reviews %}
+                    <div class="review">
+                        <div class="header">
+                            <img class="avatar" src="/user/{{ review.user.username }}/avatar" alt="{{ review.user.username }} avatar">
+                            <p class="reviewer">{{ review.user.username }}</p>
+                            {{ stars(review.stars, review.half_star, "boardgame-page-review-stars") }}
+                        </div>
+                        <p class="text">{{ review.text }}</p>
+                    </div>
+                {% endfor %}
             {% endif %}
         </div>
-
     </div>
-    <div class="reviews">
-        {% if username and not boardgame_categories %}
-            <div class="review">
-                <form action="/boardgame/{{ boardgame.name }}/review" method="POST">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <div class="header">
-                        <p class="reviewer">Arvostele: </p>
-                        <div class="input-stars">
-                            {% for i in range(5) %}
-                                <input id="star-{{ i }}-left" type="radio" name="rating", value={{ i+0.5 }}>
-                                <input id="star-{{ i }}-right" type="radio" name="rating", value={{ i+1 }}>
-                                <label for="star-{{ i }}-left" class="left"></label>
-                                <label for="star-{{ i }}-right" class="right"></label>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    <input type="text" class="boardgame-review-input" name="text" placeholder="Arvostelu">
-                    <button type="submit">✓</button>
-                </form>
-            </div>
-        {% endif %}
-        {% if reviews %}
-            {% for review in reviews %}
-                <div class="review">
-                    <div class="header">
-                        <img class="avatar" src="/user/{{ review.user.username }}/avatar" alt="{{ review.user.username }} avatar">
-                        <p class="reviewer">{{ review.user.username }}</p>
-                        {{ stars(review.stars, review.half_star, "boardgame-page-review-stars") }}
-                    </div>
-                    <p class="text">{{ review.text }}</p>
-                </div>
-            {% endfor %}
-        {% endif %}
-    </div>
-</div>
+</form>
 {% endblock %}
