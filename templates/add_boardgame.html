@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Lautapelin lisääminen{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    <h1>Lautapelin lisääminen</h1>
+    <form id="search" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div style="display: flex;"> 
+            <p>Lisättävän lautapelin nimi:</p>
+            <input type="text" name="search_word" required>
+            <button name="target" value="search" type="submit">Hae</button>
+        </div>
+    </form>
+</div>
+
+{% if boardgames and search_word %}
+    <div>
+        {% for boardgame in boardgames %}
+            <form id="{{ boardgame.name }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="boardgame_name" value="{{ boardgame.name }}">
+                <button name="target" value="edit" type="submit" class="button-none-style">
+                    <div class="boardgame-card">
+                        <img class="boardgame-thumb" src="/boardgame/{{ boardgame.name }}/photo/0" alt="Lautapelin {{ boardgame.name }} kuva">
+                        <div class="boardgame-info">
+                            <h3 class="boardgame-title">{{ boardgame.name }}</h3>
+                            <p class="property">Pelaaja määrä: {{ boardgame.number_of_players }}</p>
+                            <p class="property">Kesto: {{ boardgame.duration }} min</p>
+                            <p class="property">Luokka: {{ boardgame.category }}</div>
+                        </div>
+                    </div>
+                </button>
+            </form>
+        {% endfor %}
+    </div>
+{% endif %}
+{% if search_word %}
+    <form id="new_game" method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" name="boardgame_name" value="{{ search_word }}">
+        <button name="target" value="create" type="submit">Eikö löydy, luo uusi</button>
+    </form>
+{% endif %}
+{% endblock %}

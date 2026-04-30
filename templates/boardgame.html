@@ -32,22 +32,23 @@
                         {% endif %}
                     </div>
                 {% endif %}
-                {% if not add_boardgame %}            
+                {% if not edit_photos %}
                     <img class="boardgame-image" src="/boardgame/{{ boardgame.name }}/photo/{{ photo.id }}" alt="{{ photo.name }}">
                 {% else %}
-                    {{% if photo.id + 1 == boardgame.number_of_photos %}}    
+                    {% if photo.id + 1 == boardgame.number_of_photos %}
                         <div class="boardgame-image">
-                            <div class="phot-add-form">
+                            <div class="photo-add-form">
                                 <h4>Uuden kuvan lisääminen</h4>
                                 <input type="file" name="photo" accept="image/*"><br><br>
                                 <button name="target" value="photo" type="submit">Lisää</button>
                             </div>
                         </div>
-                    {{% else %}}
+                    {% else %}
                         <img class="boardgame-image" src="/boardgame/{{ boardgame.name }}/photo/{{ photo.id }}" alt="{{ photo.name }}">
-                    {{% endif %}}
+                    {% endif %}
                 {% endif %}
                 <div class="boardgame-image-selector">
+                    <input name="photo_id" value="photo.id" type="hidden">
                     {% if boardgame and boardgame.number_of_photos > 1%}
                         <button name="target" value="next photo" type="submit">◀</button>
                         {% if not add_boardgame %}
@@ -117,16 +118,15 @@
                     <p class="description">{{ boardgame.description }}</p>
                 {% endif %}
             </div>
-
         </div>
-        {{% if today and next_day and next_month_end %}}
+        {% if today and next_day and next_month_end %}
             <div class="calender-page">
                 <h3>Varattavia pelejä on {{ boardgame.free }}</h3>
                 <input type="date" id="reservation-start" name="booking-start" value="{{ today }}" min="{{ today }}" max="{{ next_month_end }}"/>
                 <input type="date" id="reservation-end" name="booking-start" value="{{ next_day }}" min="{{ next_day }}" max="{{ next_month_end }}"/>
                 <button value="target" name="reserve" type="submit">Varaa</button>
             </div>
-        {{% endif %}}
+        {% endif %}
         <div class="reviews">
             {% if username and not boardgame_categories %}
                 <div class="review">
