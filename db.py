@@ -289,7 +289,7 @@ def get_all_boardgames_by_search_word(search_word: str) -> list[Boardgame] | Non
         LEFT JOIN ratings r ON r.boardgame_id == b.id
         LEFT JOIN users_boardgames ub ON ub.boardgame_type == b.id
         WHERE b.name LIKE ?
-        ROUP BY b.id
+        GROUP BY b.id
         HAVING COALESCE(SUM(ub.user_games), 0) + COALESCE(SUM(ub.reserved_user_games), 0) > 0;
         """,
         (f"%{search_word}%", )

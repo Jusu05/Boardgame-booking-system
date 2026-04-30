@@ -13,10 +13,10 @@
 {%- endmacro %}
 
 {% macro plus_minus_number_input(n) -%}
-    <div style="display: flex; align-items: center;">
-        <button name="target" name="plus" type="submit">-</button>
+    <div style="display: flex; align-items: center; gap: 2px;">
+        <button name="target" value="minus" type="submit">-</button>
         <p>{{n}}</p>
-        <button name="target" name="minus" type="submit">-</button>
+        <button name="target" value="plus" type="submit">+</button>
     </div>
 {%- endmacro %}
 

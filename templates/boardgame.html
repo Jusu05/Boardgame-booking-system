@@ -3,7 +3,7 @@
 {% block title %}Lautapeli varaamo{% endblock %}
 
 {% block content %}
-<form method="post">
+<form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     {% if delete %}
         <div class="confirmation-overlay">
@@ -21,7 +21,7 @@
             </div>
         </div>
     {% endif %}
-    <div style="filter: brightness();">
+    <div>
         <div class="boardgame-page">
             <div class="boardgame-page-image-column">
                 {% if boardgame %}
@@ -72,38 +72,31 @@
                 </div>
             </div>
             <div class="boardgame-info">
-                {% if boardgame %}
-                    <h1 class="boardgame-title">{{ boardgame.name }}</h1>
-                {% else %}
-                {% endif %}
-                {% if boardgame and boardgame.stars %}
+                <h1 class="boardgame-title">{{ boardgame.name }}</h1>
+                <input type="hidden" name="name" value="{{ boardgame.number_of_players }}">
+                {% if boardgame.stars %}
                     {{ stars(boardgame.stars, boardgame.half_star, "boardgame-page-heading-stars") }}
                 {% endif %}
                 {% if boardgame_categories %}
-                    {% if boardgame %}
-                    {% else %}
-                        <input type="text" class="boardgame-title-input" name="name">
-                    {% endif %}
                     <div class="boardgame-page-edit-row">
                         <p class="property">Pelaaja määrä:</p>
-                        <input type="number" class="player-number-input" name="number_of_players" value={% if boardgame %} {{ boardgame.number_of_players }} {% else %} 4 required {% endif %}>
+                        <input type="number" class="player-number-input" name="number_of_players" value={% if boardgame.number_of_players %} {{ boardgame.number_of_players }} {% else %} 4 required {% endif %}>
                     </div>
                     <div class="boardgame-page-edit-row">
                         <p class="property">Kesto:</p>
-                        <input type="number" class="boardgame-duration-input" name="duration" value={% if boardgame %} {{ boardgame.duration }} {% else %} 30 required {% endif %}>
+                        <input type="number" class="boardgame-duration-input" name="duration" value={% if boardgame.duration %} {{ boardgame.duration }} {% else %} 30 required {% endif %}>
                         <p class="property">min</p>
                     </div>
                     <div class="boardgame-page-edit-row">
                         <p class="property">Luokka:</p>
                         <div class="selector-wrapper">
-                            <select name="category_id" id="category_id" {% if boardgame %} selected={{ boardgame.category_id }} {% endif %}>
-                                {% if not boardgame %}
-                                    <option value=0>Valitse pelin luokka</option>
-                                {% endif %}
+                            <select name="category_id" id="category_id">
                                 {% if boardgame_categories %}
                                     {% for boardgame_category in boardgame_categories %}
-                                        <option value={{ boardgame_category[0] }}>{{ boardgame_category[1] }}</option>
+                                        <option {% if boardgame.category_id == boardgame_category[0] %} selected {% endif %} value={{ boardgame_category[0] }}>{{ boardgame_category[1] }}</option>
                                     {% endfor %}
+                                {% else %}
+                                    <option value=0>Valitse pelin luokka</option>
                                 {% endif %}
                             </select>
                         </div>
