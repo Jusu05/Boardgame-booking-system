@@ -12,7 +12,7 @@ except ImportError:
 from db import insert_user, get_user_by_id, get_user_by_username, get_avatar_by_username, \
     insert_boardgame, update_boardgame, get_all_boardgames, get_boardgame_by_name, get_all_boardgames_by_search_word, get_boardgame_categories, \
     get_users_game_count_by_boardgame_id, get_user_boardgame_ids, get_user_boardgames, get_boardgame_photo_by_boardgame_name_and_photo_id, delete_users_boardgames_by_boardgame_id, set_user_boardgames_to_zero,\
-    upsert_review, get_reviews_by_boardgame_id, get_user_review_stats
+    upsert_review, get_reviews_by_boardgame_id, get_user_review_stats, add_boargame_photo_by_boardgmae_name
 from security import CSRFProtect, LoginManager, login_user, login_required, logout_user, current_user
 from env_parser import load_dotenv
 from datatypes import Boardgame, Photo, Review, User
@@ -202,6 +202,7 @@ def boardgame_photo(boardgame_name: str, id: int) -> Response:
     photo = get_boardgame_photo_by_boardgame_name_and_photo_id(boardgame_name, id)
     return Response(photo.bytes, mimetype=photo.file_type)
 
+
 @app.route("/add_boardgame", methods=["GET", "POST"])
 @login_required
 def add_boardgame() -> Response | str:
@@ -218,11 +219,13 @@ def add_boardgame() -> Response | str:
                 return add_boardgame_plus()
             case "minus":
                 return add_boardgame_minus()
+            case "photo":
+                return add_boargame_photo()
     
         return redirect("/")
 
     n = session.get("users_games", 1)
-    return render_template("boardgame.html", boardgame_categories=boardgame_categories, n=n)
+    return render_template("boardgame.html", add_boardgame=True, boardgame_categories=boardgame_categories, n=n)
 
 def add_boardgame_plus() -> str:
     session["users_games"] = session.get("users_games", 1) + 1
@@ -233,6 +236,14 @@ def add_boardgame_minus() -> str:
     session["users_games"] = max(1, session.get("users_games", 1) - 1)
     boardgame_categories = get_boardgame_categories()
     return render_template("boardgame.html", boardgame_categories=boardgame_categories, n=session["users_games"])
+
+def add_boargame_photo() -> str:
+    photo = request.files["photo"]
+    add_boargame_photo_by_boardgmae_name(request.form["name"], photo.filename, photo.read(), photo.mimetype)
+    boardgame_categories = get_boardgame_categories()
+    boardgame = get_boardgame_by_name(request.form["name"])
+    photo = get_boardgame_photo_by_boardgame_name_and_photo_id(boardgame.id, boardgame.number_of_photos - 1)
+    return render_template("boardgame.html", add_boardgame=True, boardgame=boardgame, boardgame_categories=boardgame_categories, photo=photo)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)

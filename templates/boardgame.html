@@ -32,21 +32,41 @@
                         {% endif %}
                     </div>
                 {% endif %}
-                {% if boardgame %}            
+                {% if not add_boardgame %}            
                     <img class="boardgame-image" src="/boardgame/{{ boardgame.name }}/photo/{{ photo.id }}" alt="{{ photo.name }}">
-                    {% else %}
-                    <img class="boardgame-image" src="/boardgame/7617381961/photo/0" alt="{{ photo.name }}">
+                {% else %}
+                    {{% if photo.id + 1 == boardgame.number_of_photos %}}    
+                        <div class="boardgame-image">
+                            <div class="phot-add-form">
+                                <h4>Uuden kuvan lisääminen</h4>
+                                <input type="file" name="photo" accept="image/*"><br><br>
+                                <button name="target" value="photo" type="submit">Lisää</button>
+                            </div>
+                        </div>
+                    {{% else %}}
+                        <img class="boardgame-image" src="/boardgame/{{ boardgame.name }}/photo/{{ photo.id }}" alt="{{ photo.name }}">
+                    {{% endif %}}
                 {% endif %}
                 <div class="boardgame-image-selector">
                     {% if boardgame and boardgame.number_of_photos > 1%}
                         <button name="target" value="next photo" type="submit">◀</button>
-                        {% for i in range(boardgame.number_of_photos) %}
-                            {% if i == photo.number %}
-                                <p class="dot">•</p>
-                            {% else %}
-                                <p class="dot inactive">•</p>
-                            {% endif %}
-                        {% endfor %}
+                        {% if not add_boardgame %}
+                            {% for i in range(boardgame.number_of_photos) %}
+                                {% if i == photo.number %}
+                                    <p class="dot">•</p>
+                                {% else %}
+                                    <p class="dot inactive">•</p>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            {% for i in range(boardgame.number_of_photos + 1) %}
+                                {% if i == photo.number %}
+                                    <p class="dot">•</p>
+                                {% else %}
+                                    <p class="dot inactive">•</p>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif%}
                         <button name="target" value="previous photo" type="submit">▶</button>
                     {% endif %}
                 </div>
