@@ -126,6 +126,14 @@
             </div>
 
         </div>
+        {{% if today and next_day and next_month_end %}}
+            <div class="calender-page">
+                <h3>Varattavia pelejä on {{ boardgame.free }}</h3>
+                <input type="date" id="reservation-start" name="booking-start" value="{{ today }}" min="{{ today }}" max="{{ next_month_end }}"/>
+                <input type="date" id="reservation-end" name="booking-start" value="{{ next_day }}" min="{{ next_day }}" max="{{ next_month_end }}"/>
+                <button value="target" name="reserve" type="submit">Varaa</button>
+            </div>
+        {{% endif %}}
         <div class="reviews">
             {% if username and not boardgame_categories %}
                 <div class="review">
