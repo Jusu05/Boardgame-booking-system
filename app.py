@@ -1,5 +1,6 @@
 from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, session, Response, abort
 from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime, timedelta
 import os
 
 import db
@@ -116,16 +117,20 @@ def boardgame(boardgame_name: str) -> Response | str:
                 return boardgame_minus()
             case "plus":
                 return boardgame_plus()
+            case "reserve":
+                return bardgame_reserve()
             case _:
                 pass
 
     if current_user.is_authenticated:
         users_boardgames = db.get_user_boardgame_ids(current_user.id)
         users_has_boardgames = boardgame.id in users_boardgames
+        today, next_day, next_month = get_dates()
     else:
         users_has_boardgames = False
+        today = next_day = next_month = None 
 
-    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo)
+    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month)
 
 @login_required
 def boardgame_edit(boardgame: Boardgame, reviews: list[Review]) -> str:
@@ -187,11 +192,26 @@ def boardgame_minus(boardgame: Boardgame, reviews: list[Review]) -> str:
         session["users_games"] = current
     return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, boardgame_categories=boardgame_categories, n=session["users_games"])
 
+@login_required
+def bardgame_reserve(boardgame: Boardgame, reviews: list[Review]) -> str:
+    users_boardgames = db.get_user_boardgame_ids(current_user.id)
+    users_has_boardgames = boardgame.id in users_boardgames
+    today, next_day, next_month = get_dates()
+    
+    # TODO reservation logick
+
+    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month)
+
+def get_dates():
+    today = str(datetime.today()).split(" ")[0]
+    next_day = str(datetime.today() + timedelta(days=1)).split(" ")[0]
+    next_month = str(datetime.today() + timedelta(days=30)).split(" ")[0]
+    return today, next_day, next_month
+
 @app.route("/boardgame/<boardgame_name>/photo/<int:id>", methods=["GET"])
 def boardgame_photo(boardgame_name: str, id: int) -> Response:
     photo = db.get_boardgame_photo_by_boardgame_name_and_photo_id(boardgame_name, id)
     return Response(photo.bytes, mimetype=photo.file_type)
-
 
 @app.route("/add_boardgame", methods=["GET", "POST"])
 @login_required
