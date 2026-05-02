@@ -125,7 +125,7 @@
                 <input type="date" name="booking-start" value="{{ today }}" min="{{ today }}" max="{{ next_month_end }}"/>
                 <input type="date" name="booking-end" value="{{ next_day }}" min="{{ next_day }}" max="{{ next_month_end }}"/>
                 {% if cannot_reserve %}
-                    <p>Et voi varatta peliä kyseinä ajan kohtana</p>
+                    <p>Et voi varatta peliä kyseisinä ajan kohtana</p>
                 {% endif %}
                 <button value="target" name="reserve" type="submit">Varaa</button>
             </div>
