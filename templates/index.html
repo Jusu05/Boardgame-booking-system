@@ -6,29 +6,38 @@
 <div class="search-container">
     <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" name="selected boardgames" value="{{ boardgame_page[0] if boardgame_page else 0 }}">
         <input type="text" name="search_word" required>
         <button type="submit">Hae</button>
     </form>
 </div>
 
-<div>
-{% if boardgames %}
-    {% for boardgame in boardgames %}
-    <a style="text-decoration-line: none;" href="/boardgame/{{ boardgame.name }}">
-        <div class="boardgame-card">
-            <img class="boardgame-thumb" src="/boardgame/{{ boardgame.name }}/photo/0" alt="Lautapelin {{ boardgame.name }} kuva">
-            <div class="boardgame-info">
-                <h3 class="boardgame-title">{{ boardgame.name }}</h3>
-                {% if boardgame.stars %}
-                    {{ stars(boardgame.stars, boardgame.half_star, "boardgame-card-stars")}}
-                {% endif %}
-                <p class="property">Pelaaja määrä: {{ boardgame.number_of_players }}</p>
-                <p class="property">Kesto: {{ boardgame.duration }} min</p>
-                <p class="property">Luokka: {{ boardgame.category }}</div>
-            </div>
-        </div>
-    </a>
-    {% endfor %}
-{% endif %}
-</div>
+<form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <input type="hidden" name="selected boardgames" value="{{ boardgame_page[0] if boardgame_page else 0 }}">
+
+    <div>
+        {% if boardgames %}
+            {% for boardgame in boardgames %}
+                <a style="text-decoration-line: none;" href="/boardgame/{{ boardgame.name }}">
+                    <div class="boardgame-card">
+                        <img class="boardgame-thumb" src="/boardgame/{{ boardgame.name }}/photo/0" alt="Lautapelin {{ boardgame.name }} kuva">
+                        <div class="boardgame-info">
+                            <h3 class="boardgame-title">{{ boardgame.name }}</h3>
+                            {% if boardgame.stars %}
+                                {{ stars(boardgame.stars, boardgame.half_star, "boardgame-card-stars")}}
+                            {% endif %}
+                            <p class="property">Pelaaja määrä: {{ boardgame.number_of_players }}</p>
+                            <p class="property">Kesto: {{ boardgame.duration }} min</p>
+                            <p class="property">Luokka: {{ boardgame.category }}</p>
+                        </div>
+                    </div>
+                </a>
+            {% endfor %}
+            {% if boardgame_page %}
+                {{ page_selector_input(boardgame_page[0], boardgame_page[1], boardgame_page[2], "boardgames") }}
+            {% endif %}
+        {% endif %}
+    </div>
+</form>
 {% endblock %}
