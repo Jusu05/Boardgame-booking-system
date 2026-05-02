@@ -200,8 +200,14 @@ def boardgame_reserve(boardgame: Boardgame, reviews: list[Review], photo) -> str
     users_boardgames = db.get_user_boardgame_ids(current_user.id)
     users_has_boardgames = boardgame.id in users_boardgames
     today, next_day, next_month = get_dates()
-    
-    # TODO reservation logic
+    boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
+    start = datetime.fromisoformat(request.form["booking-start"])
+    end = datetime.fromisoformat(request.form["booking-end"])
+
+    if db.can_be_reserved(boardgame.id, start, end):
+        db.insert_reservation(boardgame.id, start, end)
+    else:
+        return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month, cannot_reserve=True)
 
     return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month)
 

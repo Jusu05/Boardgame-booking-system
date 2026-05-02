@@ -1,4 +1,5 @@
 import sqlite3, os
+from datetime import datetime
 from datatypes import Boardgame, Photo, Review, User, DatabaseError
 
 class SqlConnection:
@@ -363,3 +364,38 @@ def upsert_review(boardgame_id: int, review: Review) -> None:
     """,
     (boardgame_id, review.user.id, review.rating, review.text)
     )
+
+def insert_reservation(boardgame_id: int, start: datetime, end: datetime) -> None:
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    user_id = conn.read("""
+        SELECT MIN(user_id)
+        FROM users_boardgames u
+        WHERE u.user_games - u.reserved_user_games > 0
+            AND boardgame_type == ?;
+    """, (boardgame_id, ))
+
+    conn.write("""
+        UPDATE users_boardgames
+        SET user_games = ? - 1, reserved_user_games = ? + 1
+        SELECT user_games, reserved_user_games
+        FROM users_boardgames;
+    """)
+
+    conn.write("""
+        INSERT INTO reservation 
+            (start_time, end_time, user_id, boardgame_id) 
+        VALUES
+            (?,?,?,?);
+        """, (start, end, user_id, boardgame_id))
+
+def can_be_reserved(boardgame_id: int, start: datetime, end: datetime) -> bool:
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    can_reserved = conn.read("""
+        SELECT COUNT(id) == 0
+        FROM reservation
+        WHERE boardgame_id == ?
+            AND start_time < ?
+            AND end_time < ?;
+    """, (boardgame_id, start, end))
+
+    return bool(can_reserved[0][0])
