@@ -227,6 +227,11 @@ input[type="text"] {
     outline: none;
 }
 
+input[type="date"] {
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+}
+
 input[type="number"] {
     -webkit-appearance: none;
     appearance: none;

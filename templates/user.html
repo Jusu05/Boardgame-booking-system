@@ -6,7 +6,7 @@
 <div class="user-page">
     <div class="user">
         <h1>{{ user.username }}</h1>
-        <div class="avatar"> <img src="/user/{{ review.user.username }}/avatar" alt="{{ review.user.username }} avatar"></div>
+        <img class="avatar" src="/user/{{ user.username }}/avatar" alt="{{ user.username }} avatar">
     </div>
     <div class="info">
         <h4>Lisäämäsi pelit:</h4>
@@ -20,20 +20,31 @@
             <p>Et ole lisännyt lautapelejä</p>
         {% endif %}
     </div>
-
     <div class="info">
         <h4>Tilastoja lautapeli arvioista:</h4>
         {% if review_stats and review_stats[0] != 0 %}
-            <div style="display: center;">
-                <p>Arvioiden määrä: {{ review_stats[0] }}</p>
-                <div style="display: flex;">
-                    <p>Arvioiden keskiarvo: </p>
-                    {{ stars(review_stats[1], review_stats[2], "stars") }}
-                </div>
+            <p>Arvioiden määrä: {{ review_stats[0] }}</p>
+            <div style="display: flex; align-items: center; gap: 4px;">
+                <p>Arvioiden keskiarvo: </p>
+                {{ stars(review_stats[1], review_stats[2], "stars") }}
             </div>
         {% else %}
             <p>Et ole arvioinut lautapelejä</p>
         {% endif %}
     </div>
+    {% if reservations %}
+        <div class="info">
+            <h4>Varaamasi lautapelit</h4>
+            <form>
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                {% for name in reservations %}
+                    <div style="display: flex;">
+                        <p>{{ name }}</p>
+                        <button name="return" value="{{ name }}" type="submit">Palauta</button>
+                    </div>
+                {% endfor %}
+            </form>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}
