@@ -232,8 +232,8 @@ def get_user_boardgames(user_id: int) -> list[Boardgame] | None:
             SUM(ub.reserved_user_games) AS reserved_games,
             c.category,
             CAST(AVG(r.rating) AS INTEGER) AS stars,
-            IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
-            p.name
+            IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star,
+            p.name,
             p.id
         FROM boardgames b
         LEFT JOIN categories c ON b.category_id == c.id
@@ -365,37 +365,85 @@ def upsert_review(boardgame_id: int, review: Review) -> None:
     (boardgame_id, review.user.id, review.rating, review.text)
     )
 
-def insert_reservation(boardgame_id: int, start: datetime, end: datetime) -> None:
+def insert_reservation(user_id: int, boardgame_id: int, start: datetime, end: datetime) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    user_id = conn.read("""
-        SELECT MIN(user_id)
-        FROM users_boardgames u
-        WHERE u.user_games - u.reserved_user_games > 0
-            AND boardgame_type == ?;
+    game_owner = conn.read("""
+        SELECT user_games, reserved_user_games, user_id
+        FROM users_boardgames
+        WHERE user_games - reserved_user_games > 0
+          AND boardgame_type == ?
+        ORDER BY user_id ASC
+        LIMIT 1;
     """, (boardgame_id, ))
+
+    if not game_owner:
+        return
 
     conn.write("""
         UPDATE users_boardgames
         SET user_games = ? - 1, reserved_user_games = ? + 1
-        SELECT user_games, reserved_user_games
-        FROM users_boardgames;
-    """)
+        WHERE user_id = ?
+    """, game_owner[0])
 
     conn.write("""
         INSERT INTO reservation 
-            (start_time, end_time, user_id, boardgame_id) 
+            (start_time, end_time, reserver, game_owner, boardgame_id) 
         VALUES
-            (?,?,?,?);
-        """, (start, end, user_id, boardgame_id))
+            (?,?,?,?,?);
+    """, (start, end, user_id, game_owner[0][2], boardgame_id))
+
+def has_user_reserved_boardgame(user_id: int, boardgame_id: int) -> bool:
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    date = datetime.today()
+    reserved = conn.read("""
+        SELECT 1
+        FROM reservation
+        WHERE reserver == ?
+            AND boardgame_id == ?
+            AND ? BETWEEN start_time AND end_time
+    """, (user_id, boardgame_id, date))
+    if reserved:
+        return True
+    return False
 
 def can_be_reserved(boardgame_id: int, start: datetime, end: datetime) -> bool:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     can_reserved = conn.read("""
-        SELECT COUNT(id) == 0
-        FROM reservation
-        WHERE boardgame_id == ?
-            AND start_time < ?
-            AND end_time < ?;
+        SELECT NOT EXISTS (
+            SELECT 1
+            FROM reservation
+            WHERE boardgame_id == ?
+            AND NOT (
+                end_time <= ?
+                OR start_time >= ?
+            )
+        );
     """, (boardgame_id, start, end))
 
     return bool(can_reserved[0][0])
+
+def get_boardgame_names_with_user_has_active_reservation(user_id: int) -> list[str] | None:
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    date = datetime.today()
+    reservations = conn.read("""
+        SELECT b.name
+        FROM reservation r
+        LEFT JOIN boardgames b ON b.id == r.boardgame_id
+        WHERE ? BETWEEN r.start_time AND r.end_time
+            AND r.reserver == ?;
+    """, (date, user_id))
+
+    if len(reservations) == 0:
+        return None
+    return [name[0] for name in reservations]
+
+def set_boardgame_returned(boardgame: Boardgame, user_id: int) -> None:
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    date = datetime.today()
+    conn.write("""
+        UPDATE reservation
+        SET end_time = ?
+        WHERE boardgame_id == ?
+            AND reserver == ?
+    """, (date, boardgame.id, user_id)
+    )

@@ -78,12 +78,18 @@ def logout() -> Response:
     logout_user()
     return redirect("/")
 
-@app.route("/user", methods=["GET"])
+@app.route("/user", methods=["GET", "POST"])
 @login_required
 def user() -> str:
     boardgames = db.get_user_boardgames(current_user.id)
     review_stats = db.get_user_review_stats(current_user.id)
-    return render_template("user.html", user=current_user, boardgames=boardgames, review_stats=review_stats)
+    
+    if request.method == "POST":
+        boardgame = db.get_boardgame_by_name(request.method["return"])
+        db.set_boardgame_returned(boardgame, current_user.id)
+    
+    reservations = db.get_boardgame_names_with_user_has_active_reservation(current_user.id)
+    return render_template("user.html", user=current_user, boardgames=boardgames, review_stats=review_stats, reservations=reservations)
 
 @app.route("/boardgame/<boardgame_name>", methods=["GET", "POST"])
 def boardgame(boardgame_name: str) -> Response | str:
@@ -122,7 +128,9 @@ def boardgame(boardgame_name: str) -> Response | str:
             case "plus":
                 return boardgame_plus(boardgame, reviews, photo)
             case "reserve":
-                return boardgame_reserve()
+                return boardgame_reserve(boardgame, reviews, photo)
+            case "return":
+                db.set_boardgame_returned(boardgame, current_user.id)
             case _:
                 pass
 
@@ -130,11 +138,12 @@ def boardgame(boardgame_name: str) -> Response | str:
         users_boardgames = db.get_user_boardgame_ids(current_user.id)
         users_has_boardgames = boardgame.id in users_boardgames
         today, next_day, next_month = get_dates()
+        user_reserved_game = db.has_user_reserved_boardgame(current_user.id, boardgame.id)
     else:
-        users_has_boardgames = False
-        today = next_day = next_month = None 
+        user_reserved_game = users_has_boardgames = False
+        today = next_day = next_month = None
 
-    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month)
+    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month, user_reserved_game=user_reserved_game)
 
 @login_required
 def boardgame_edit(boardgame: Boardgame, reviews: list[Review], photo: Photo) -> str:
@@ -200,16 +209,15 @@ def boardgame_reserve(boardgame: Boardgame, reviews: list[Review], photo) -> str
     users_boardgames = db.get_user_boardgame_ids(current_user.id)
     users_has_boardgames = boardgame.id in users_boardgames
     today, next_day, next_month = get_dates()
-    boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
     start = datetime.fromisoformat(request.form["booking-start"])
     end = datetime.fromisoformat(request.form["booking-end"])
 
     if db.can_be_reserved(boardgame.id, start, end):
-        db.insert_reservation(boardgame.id, start, end)
+        db.insert_reservation(current_user.id, boardgame.id, start, end)
     else:
         return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month, cannot_reserve=True)
 
-    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month)
+    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month, user_reserved_game=True)
 
 def get_dates():
     today = str(datetime.today()).split(" ")[0]
