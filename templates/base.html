@@ -13,11 +13,32 @@
 {%- endmacro %}
 
 {% macro plus_minus_number_input(n) -%}
-    <div style="display: flex; align-items: center; gap: 2px;">
-        <button name="target" value="minus" type="submit">-</button>
+    <div class="plus-minus-input">
+        <button name="target" value="minus" class="button-none-style" type="submit">-</button>
         <p>{{n}}</p>
-        <button name="target" value="plus" type="submit">+</button>
+        <button name="target" value="plus" class="button-none-style" type="submit">+</button>
     </div>
+{%- endmacro %}
+
+{% macro page_selector_input(selected, minimum_value, page_count, name) -%}
+    {% if page_count != 1 %}
+        <div class="page-selector">
+            {% if selected > 0 %}
+                <button name="target" value="previous page {{ name }}" class="button-none-style" type="submit">◀</button>
+            {% endif %}
+            {% for i in range(page_count if page_count < 5 else 5) %}
+                {% if selected == minimum_value + i %}
+                    <button name="target" value="{{ name }} {{ minimum_value + i + 1 }}" class="number selected">{{ minimum_value + i + 1 }}</button>
+                {% else %}
+                    <button name="target" value="{{ name }} {{ minimum_value + i + 1 }}" class="number">{{ minimum_value + i + 1 }}</button>
+                {% endif %}
+            {% endfor %}
+            <input type="hidden" name="selected {{ name }}" value="{{ selected }}">
+            {% if selected < page_count - 1 %}
+                <button name="target" value="next page {{ name }}" class="button-none-style" type="submit">▶</button>
+            {% endif %}
+        </div>
+    {% endif %}
 {%- endmacro %}
 
 <!DOCTYPE html>

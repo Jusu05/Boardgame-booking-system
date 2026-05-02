@@ -5,6 +5,7 @@
 {% block content %}
 <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <input type="hidden" name="selected review" value="{{ review_page[0] if review_page else 0 }}">
     {% if delete %}
         <div class="confirmation-overlay">
             <div class="confirmation-box">
@@ -48,7 +49,7 @@
                     {% endif %}
                 {% endif %}
                 <div class="boardgame-image-selector">
-                    <input name="photo_id" value="photo.id" type="hidden">
+                    <input name="photo_id" value="{{ photo.id }}" type="hidden">
                     {% if boardgame and boardgame.number_of_photos > 1%}
                         <button name="target" value="next photo" type="submit">◀</button>
                         {% if not add_boardgame %}
@@ -74,7 +75,7 @@
             </div>
             <div class="boardgame-info">
                 <h1 class="boardgame-title">{{ boardgame.name }}</h1>
-                <input type="hidden" name="boardgame_name" value="{{ boardgame.number_of_players }}">
+                <input type="hidden" name="boardgame_name" value="{{ boardgame.name }}">
                 {% if boardgame.stars %}
                     {{ stars(boardgame.stars, boardgame.half_star, "boardgame-page-heading-stars") }}
                 {% endif %}
@@ -139,20 +140,19 @@
         <div class="reviews">
             {% if username and not boardgame_categories %}
                 <div class="review">
-                    <form action="/boardgame/{{ boardgame.name }}/review" method="POST">
-                        <div class="header">
-                            <p class="reviewer">Arvostele: </p>
-                            <div class="input-stars">
-                                {% for i in range(5) %}
-                                    <input id="star-{{ i }}-left" type="radio" name="rating", value={{ i+0.5 }}>
-                                    <input id="star-{{ i }}-right" type="radio" name="rating", value={{ i+1 }}>
-                                    <label for="star-{{ i }}-left" class="left"></label>
-                                    <label for="star-{{ i }}-right" class="right"></label>
-                                {% endfor %}
-                            </div>
+                    <div class="header">
+                        <p class="reviewer">Arvostele: </p>
+                        <div class="input-stars">
+                            {% for i in range(5) %}
+                                <input id="star-{{ i }}-left" type="radio" name="rating", value={{ i+0.5 }}>
+                                <input id="star-{{ i }}-right" type="radio" name="rating", value={{ i+1 }}>
+                                <label for="star-{{ i }}-left" class="left"></label>
+                                <label for="star-{{ i }}-right" class="right"></label>
+                            {% endfor %}
                         </div>
-                        <input type="text" class="boardgame-review-input" name="text" placeholder="Arvostelu">
-                        <button name="target" value="review" type="submit">✓</button>
+                    </div>
+                    <input type="text" class="boardgame-review-input" name="text" placeholder="Arvostelu">
+                    <button name="target" value="review" type="submit">✓</button>
                 </div>
             {% endif %}
             {% if reviews %}
@@ -166,6 +166,9 @@
                         <p class="text">{{ review.text }}</p>
                     </div>
                 {% endfor %}
+                {% if review_page %}
+                    {{ page_selector_input(review_page[0], review_page[1], review_page[2], "review") }}
+                {% endif %}
             {% endif %}
         </div>
     </div>

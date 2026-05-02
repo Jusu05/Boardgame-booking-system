@@ -32,14 +32,35 @@ def inject_flags() -> dict:
 
 @app.route("/", methods=["GET", "POST"])
 def index() -> str:
-    boardgames = db.get_all_boardgames()
+    page = request.form.get("selected boardgames", 0, int)
 
     if request.method == "POST":
-        boardgames = db.get_all_boardgames_by_search_word(request.form["search_word"])
+        match request.form.get("target"):
+            case "next page boardgames":
+                page += 1
+            case "previous page boardgames":
+                page = max(0, page - 1)
+            case _ as t if t and t.startswith("boardgames"):
+                page = int(t.split(" ", 1)[1]) - 1
+
+    if request.method == "POST" and "search_word" in request.form:
+        boardgames = db.get_all_boardgames_by_search_word(request.form["search_word"], page)
+    else:
+        boardgames = db.get_boardgame_page(page)
+
+    total = db.get_number_of_boardgames()
+    page_size = int(os.getenv("PAGE_SIZE"))
+    boardgame_page = make_page_tuple(page, total, page_size)
 
     if boardgames:
-        return render_template("index.html", boardgames=boardgames)
-    return render_template("index.html")
+        return render_template("index.html", boardgames=boardgames, boardgame_page=boardgame_page)
+    return render_template("index.html", boardgame_page=boardgame_page)
+
+def make_page_tuple(page: int, total: int, page_size: int) -> tuple[int, int, int]:
+    page_count = max(1, -(-total // page_size))
+    page = max(0, min(page, page_count - 1))
+    window_start = max(0, min(page - 5 // 2, page_count - 5))
+    return (page, window_start, page_count)
 
 @app.route("/login", methods=["GET", "POST"])
 def login()-> Response | str:
@@ -81,15 +102,52 @@ def logout() -> Response:
 @app.route("/user", methods=["GET", "POST"])
 @login_required
 def user() -> str:
-    boardgames = db.get_user_boardgames(current_user.id)
-    review_stats = db.get_user_review_stats(current_user.id)
-    
+    page_size = int(os.getenv("PAGE_SIZE"))
+
+    boardgame_page_num = request.form.get("selected boardgames", 0, int)
+    ratings_page_num = request.form.get("selected ratings", 0, int)
+
     if request.method == "POST":
-        boardgame = db.get_boardgame_by_name(request.method["return"])
-        db.set_boardgame_returned(boardgame, current_user.id)
-    
+        target = request.form.get("target", "")
+        match target:
+            case "next page boardgames":
+                boardgame_page_num += 1
+            case "previous page boardgames":
+                boardgame_page_num = max(0, boardgame_page_num - 1)
+            case "next page ratings":
+                ratings_page_num += 1
+            case "previous page ratings":
+                ratings_page_num = max(0, ratings_page_num - 1)
+            case "next page ratings":
+                ratings_page_num += 1
+            case "previous page ratings":
+                ratings_page_num = max(0, ratings_page_num - 1)
+            case _:
+                if target.startswith("ratings"):
+                    ratings_page_num = int(target.split(" ", 1)[1]) - 1
+                elif target.startswith("boardgames"):
+                    boardgame_page_num = int(target.split(" ", 1)[1]) - 1
+                elif target.startswith("ratings"):
+                    ratings_page_num = int(target.split(" ", 1)[1]) - 1
+
+    boardgames = db.get_user_boardgames(current_user.id, boardgame_page_num)
+    review_stats = db.get_user_review_stats(current_user.id)
+
+    if request.method == "POST":
+        boardgame = db.get_boardgame_by_name(request.form.get("return", ""))
+        if boardgame:
+            db.set_boardgame_returned(boardgame, current_user.id)
+
     reservations = db.get_boardgame_names_with_user_has_active_reservation(current_user.id)
-    return render_template("user.html", user=current_user, boardgames=boardgames, review_stats=review_stats, reservations=reservations)
+
+    total_reservations = db.get_number_of_user_reservations(current_user.id)
+    reservation_page = make_page_tuple(ratings_page_num, total_reservations, page_size)
+    total_boardgames = db.get_number_of_boardgames()
+    boardgames_page = make_page_tuple(boardgame_page_num, total_boardgames, page_size)
+    total_ratings = db.get_number_of_user_ratings(current_user.id)
+    ratings_page = make_page_tuple(ratings_page_num, total_ratings, page_size)
+
+    return render_template("user.html", user=current_user, boardgames=boardgames, review_stats=review_stats, reservations=reservations, reservation_page=reservation_page, ratings_page=ratings_page, boardgames_page=boardgames_page)
 
 @app.route("/boardgame/<boardgame_name>", methods=["GET", "POST"])
 def boardgame(boardgame_name: str) -> Response | str:
@@ -98,11 +156,28 @@ def boardgame(boardgame_name: str) -> Response | str:
 
     if not boardgame:
         return redirect("/")
-    
-    reviews = db.get_reviews_by_boardgame_id(boardgame.id)
+
+    review_page_num = request.form.get("selected review", 0, int)
 
     if request.method == "POST":
-        match request.form["target"]:
+        target = request.form.get("target", "")
+        match target:
+            case "next page review":
+                review_page_num += 1
+            case "previous page review":
+                review_page_num = max(0, review_page_num - 1)
+            case _:
+                if target.startswith("review"):
+                    review_page_num = int(target.split(" ", 1)[1]) - 1
+
+    reviews = db.get_reviews_by_boardgame_id(boardgame.id, review_page_num)
+
+    total_reviews = db.get_number_of_boardgame_reviews(boardgame.id)
+    page_size = int(os.getenv("PAGE_SIZE"))
+    review_page = make_page_tuple(review_page_num, total_reviews, page_size)
+
+    if request.method == "POST":
+        match request.form.get("target"):
             case "cancel":
                 pass
             case "confirm":
@@ -110,9 +185,9 @@ def boardgame(boardgame_name: str) -> Response | str:
             case "review":
                 return boardgame_review(boardgame)
             case "edit":
-                return boardgame_edit(boardgame, reviews, photo)
+                return boardgame_edit(boardgame, reviews, photo, review_page)
             case "delete":
-                return boardgame_delete(boardgame_name, photo)
+                return boardgame_delete(boardgame, reviews, photo, review_page)
             case "confirm delete":
                 return boardgame_delete_confirm(boardgame_name)
             case "next photo":
@@ -121,14 +196,14 @@ def boardgame(boardgame_name: str) -> Response | str:
                     photo = db.get_boardgame_photo_by_boardgame_name_and_photo_id(boardgame.id, photo.id + 1)
             case "previous photo":
                 boardgame.update(request.form)
-                if photo.id - 1 < 0:
+                if photo.id - 1 >= 0:
                     photo = db.get_boardgame_photo_by_boardgame_name_and_photo_id(boardgame.id, photo.id - 1)
             case "minus":
-                return boardgame_minus(boardgame, reviews, photo)
+                return boardgame_minus(boardgame, reviews, photo, review_page)
             case "plus":
-                return boardgame_plus(boardgame, reviews, photo)
+                return boardgame_plus(boardgame, reviews, photo, review_page)
             case "reserve":
-                return boardgame_reserve(boardgame, reviews, photo)
+                return boardgame_reserve(boardgame, reviews, photo, review_page)
             case "return":
                 db.set_boardgame_returned(boardgame, current_user.id)
             case _:
@@ -143,18 +218,18 @@ def boardgame(boardgame_name: str) -> Response | str:
         user_reserved_game = users_has_boardgames = False
         today = next_day = next_month = None
 
-    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month, user_reserved_game=user_reserved_game)
+    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month, user_reserved_game=user_reserved_game, review_page=review_page)
 
 @login_required
-def boardgame_edit(boardgame: Boardgame, reviews: list[Review], photo: Photo) -> str:
+def boardgame_edit(boardgame: Boardgame, reviews: list[Review], photo: Photo, review_page: tuple) -> str:
     boardgame_categories = db.get_boardgame_categories()
-    user_boardgames, _ = db.get_users_game_count_by_boardgame_id(boardgame.id)    
-    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, boardgame_categories=boardgame_categories, n=user_boardgames, photo=photo, edit_photos=True)
+    user_boardgames, _ = db.get_users_game_count_by_boardgame_id(boardgame.id)
+    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, boardgame_categories=boardgame_categories, n=user_boardgames, photo=photo, edit_photos=True, review_page=review_page)
 
 @login_required
-def boardgame_delete(boardgame: Boardgame, reviews: list[Review], photo: Photo) -> str:
+def boardgame_delete(boardgame: Boardgame, reviews: list[Review], photo: Photo, review_page: tuple) -> str:
     user_boardgames, reserved_user_boardgames = db.get_users_game_count_by_boardgame_id(boardgame.id)
-    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, n=user_boardgames, delete=True, reserved_user_boardgames=reserved_user_boardgames, photo=photo)
+    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, n=user_boardgames, delete=True, reserved_user_boardgames=reserved_user_boardgames, photo=photo, review_page=review_page)
 
 @login_required
 def boardgame_delete_confirm(boardgame_name: str) -> Response:
@@ -185,27 +260,27 @@ def boardgame_review(boardgame: Boardgame) -> Response:
     return redirect(f"/boardgame/{boardgame.name}")
 
 @login_required
-def boardgame_plus(boardgame: Boardgame, reviews: list[Review], photo: Photo) -> str:
+def boardgame_plus(boardgame: Boardgame, reviews: list[Review], photo: Photo, review_page: tuple) -> str:
     boardgame_categories = db.get_boardgame_categories()
     boardgame.update(request.form)
     user_games, _ = db.get_users_game_count_by_boardgame_id(boardgame.id)
     session["users_games"] = session.get("users_games", user_games) + 1
-    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, boardgame_categories=boardgame_categories, n=session["users_games"], photo=photo, edit_photos=True)
+    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, boardgame_categories=boardgame_categories, n=session["users_games"], photo=photo, edit_photos=True, review_page=review_page)
 
 @login_required
-def boardgame_minus(boardgame: Boardgame, reviews: list[Review], photo: Photo) -> str:
+def boardgame_minus(boardgame: Boardgame, reviews: list[Review], photo: Photo, review_page: tuple) -> str:
     boardgame_categories = db.get_boardgame_categories()
     user_games, reserved = db.get_users_game_count_by_boardgame_id(boardgame.id)
     boardgame.update(request.form)
     current = session.get("users_games", user_games)
-    if current - 1 >  reserved:
+    if current - 1 > reserved:
         session["users_games"] = current - 1
     else:
         session["users_games"] = current
-    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, boardgame_categories=boardgame_categories, n=session["users_games"], photo=photo, edit_photos=True)
+    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, boardgame_categories=boardgame_categories, n=session["users_games"], photo=photo, edit_photos=True, review_page=review_page)
 
 @login_required
-def boardgame_reserve(boardgame: Boardgame, reviews: list[Review], photo) -> str:
+def boardgame_reserve(boardgame: Boardgame, reviews: list[Review], photo, review_page: tuple) -> str:
     users_boardgames = db.get_user_boardgame_ids(current_user.id)
     users_has_boardgames = boardgame.id in users_boardgames
     today, next_day, next_month = get_dates()
@@ -215,9 +290,9 @@ def boardgame_reserve(boardgame: Boardgame, reviews: list[Review], photo) -> str
     if db.can_be_reserved(boardgame.id, start, end):
         db.insert_reservation(current_user.id, boardgame.id, start, end)
     else:
-        return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month, cannot_reserve=True)
+        return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month, cannot_reserve=True, review_page=review_page)
 
-    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month, user_reserved_game=True)
+    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month, user_reserved_game=True, review_page=review_page)
 
 def get_dates():
     today = str(datetime.today()).split(" ")[0]
@@ -234,8 +309,15 @@ def boardgame_photo(boardgame_name: str, id: int) -> Response:
 @login_required
 def add_boardgame() -> Response | str:
     boardgames = None
+    page = request.form.get("selected boardgames", 0, int)
+
     if request.method == "POST":
-        match request.form["target"]:
+        target = request.form.get("target", "")
+        match target:
+            case "next page boardgames":
+                page += 1
+            case "previous page boardgames":
+                page = max(0, page - 1)
             case "edit":
                 return add_boardgame_edit()
             case "create":
@@ -249,14 +331,20 @@ def add_boardgame() -> Response | str:
             case "photo":
                 return add_boardgame_photo()
             case "search":
-                boardgames = db.get_all_boardgames_by_search_word(request.form["search_word"])
+                boardgames = db.get_all_boardgames_by_search_word(request.form["search_word"], page)
             case "cancel":
                 return add_boardgame_cancel()
             case _:
-                return redirect("/")
+                if target.startswith("boardgames"):
+                    page = int(target.split(" ", 1)[1]) - 1
 
     search_word = request.form.get("search_word")
-    return render_template("add_boardgame.html", boardgames=boardgames, search_word=search_word)
+
+    total = db.get_number_of_boardgames()
+    page_size = int(os.getenv("PAGE_SIZE"))
+    boardgame_page = make_page_tuple(page, total, page_size)
+
+    return render_template("add_boardgame.html", boardgames=boardgames, search_word=search_word, boardgame_page=boardgame_page)
 
 @login_required
 def add_boardgame_edit() -> str:

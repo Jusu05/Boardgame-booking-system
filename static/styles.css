@@ -400,3 +400,20 @@ select {
     background: var(--background);
     border: 0;
 }
+
+.page-selector {
+    display: flex;
+    align-items: center; 
+    gap: 2px;
+}
+
+.page-selector .number {
+    border: 1px solid var(--border-color);
+    border-radius: 2px;
+}
+
+.plus-minus-input {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
