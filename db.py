@@ -19,14 +19,14 @@ class SqlConnection:
         connection.close()
 
     def read(self, command: str, params: tuple = None) -> list:
-        connection = sqlite3.connect(self._file)    
+        connection = sqlite3.connect(self._file)
         cursor = connection.cursor()
-
+        
         if params:
             cursor.execute(command, params)
         else:
             cursor.execute(command)
-
+    
         data = cursor.fetchall()
         connection.commit()
         connection.close()
@@ -35,19 +35,17 @@ class SqlConnection:
 def get_user_by_id(user_id: int) -> User | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     user = conn.read("SELECT username, password FROM users WHERE id = ?;", (user_id,))
-
+    
     if len(user) > 0:
         return User(user_id, user[0][0], user[0][1])
-
     return None
 
 def get_user_by_username(username: str) -> User | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     user = conn.read("SELECT id, password FROM users WHERE username = ?;", (username,))
-
+    
     if len(user) > 0:
         return User(user[0][0], username, user[0][1])
-
     return None
 
 def insert_user(username: str, password: str) -> None:
@@ -65,12 +63,12 @@ def get_avatar_by_username(username: str) -> Photo:
     result = conn.read("""
         SELECT a.file_format, a.avatar 
         FROM avatars a
-        JOIN users u ON u.id == a.user_id
-        WHERE u.username = ?; 
+        JOIN users u ON u.id = a.user_id
+        WHERE u.username = ?;
     """, (username,))
 
     if len(result) > 0:
-        return Photo(f"{username} avatar", None, result[0], result[1])
+        return Photo(f"{username} avatar", None, result[0][1], result[1][2])
 
     b = bytes.fromhex("""
         89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52 00 00 01 f4 00 00 01 f4
@@ -182,15 +180,14 @@ def get_avatar_by_username(username: str) -> Photo:
         00 04 1d 00 10 74 00 40 d0 01 40 d0 01 00 41 07 00 04 1d 00 10 74 00 10
         74 00 40 d0 01 80 72 1f 73 39 6d e7 9e ac c7 c8 00 00 00 00 49 45 4e 44
         ae 42 60 82""")
-    return Photo(f"{username} avatar", 0, "image/png", b)
-
+    return Photo(f"{username} avatar", None, "image/png", b)
 
 def get_users_game_count_by_boardgame_id(boardgame_id: int) -> list[int] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read("""
         SELECT user_games, reserved_user_games
         FROM users_boardgames
-        WHERE boardgame_type == ?;
+        WHERE boardgame_type = ?;
     """, (boardgame_id,))
 
     if len(result) > 0:
@@ -202,17 +199,17 @@ def set_user_boardgames_to_zero(user_id: int) -> None:
     conn.write("""
         UPDATE users_boardgames
         SET user_games = 0
-        WHERE user_id == ?;
+        WHERE user_id = ?;
     """, (user_id,))
 
 def delete_users_boardgames_by_boardgame_id(boardgame_id: int) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    conn.write("DELETE FROM user_boardgames WHERE boardgame_id == ?;", (boardgame_id,))
+    conn.write("DELETE FROM users_boardgames WHERE boardgame_id = ?;", (boardgame_id,))
 
 def get_user_boardgame_ids(user_id: int) -> set[int] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    result = conn.read("SELECT boardgame_type FROM users_boardgames WHERE user_id == ?;", (user_id,))
-
+    result = conn.read("SELECT boardgame_type FROM users_boardgames WHERE user_id = ?;", (user_id,))
+    
     if len(result) > 0:
         return {value[0] for value in result}
     return None
@@ -266,9 +263,9 @@ def update_boardgame(boardgame: Boardgame, user_id: int, users_games: int = None
 
 def delete_boardgame(boardgame: Boardgame, user_id: int) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    conn.write("DROP FROM photos WHERE boardgame_id == ?;", (boardgame.id,))
-    conn.write("DROP FROM users_boardgames WHERE boardgame_id == ? AND user_id == ?;", (boardgame.id, user_id))
-    conn.write("DROP FROM boardgames WHERE boardgame_id == ?;", (boardgame.id, user_id))
+    conn.write("DELETE FROM photos WHERE boardgame_id = ?;", (boardgame.id,))
+    conn.write("DELETE FROM users_boardgames WHERE boardgame_id = ? AND user_id = ?;", (boardgame.id, user_id))
+    conn.write("DELETE FROM boardgames WHERE id = ?;", (boardgame.id,))
 
 def get_boardgame_by_name(boardgame_name: str) -> Boardgame | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
@@ -285,10 +282,10 @@ def get_boardgame_by_name(boardgame_name: str) -> Boardgame | None:
             IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star,
             COUNT(p.id) AS number_of_photos
         FROM boardgames b
-        LEFT JOIN categories c ON b.category_id == c.id
-        LEFT JOIN ratings r ON r.boardgame_id == b.id
-        LEFT JOIN users_boardgames ub ON ub.boardgame_type == b.id
-        LEFT JOIN photos p ON p.boardgame_id == b.id
+        LEFT JOIN categories c ON b.category_id = c.id
+        LEFT JOIN ratings r ON r.boardgame_id = b.id
+        LEFT JOIN users_boardgames ub ON ub.boardgame_type = b.id
+        LEFT JOIN photos p ON p.boardgame_id = b.id
         WHERE b.name = ?
         GROUP BY b.id;
     """, (boardgame_name,))
@@ -317,9 +314,9 @@ def get_boardgame_page(page_num: int) -> list[Boardgame] | None:
             CAST(AVG(r.rating) AS INTEGER) AS stars,
             IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
         FROM boardgames b
-        LEFT JOIN categories c ON b.category_id == c.id
-        LEFT JOIN ratings r ON r.boardgame_id == b.id
-        LEFT JOIN users_boardgames ub ON ub.boardgame_type == b.id
+        LEFT JOIN categories c ON b.category_id = c.id
+        LEFT JOIN ratings r ON r.boardgame_id = b.id
+        LEFT JOIN users_boardgames ub ON ub.boardgame_type = b.id
         GROUP BY b.id
         HAVING COALESCE(SUM(ub.user_games), 0) + COALESCE(SUM(ub.reserved_user_games), 0) > 0
         LIMIT ?
@@ -343,27 +340,24 @@ def get_user_boardgames(user_id: int, page_num: int) -> list[Boardgame] | None:
             SUM(ub.reserved_user_games) AS reserved_games,
             c.category,
             CAST(AVG(r.rating) AS INTEGER) AS stars,
-            IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star,
-            p.name,
-            p.id
+            IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
         FROM boardgames b
-        LEFT JOIN categories c ON b.category_id == c.id
-        LEFT JOIN ratings r ON r.boardgame_id == b.id
-        LEFT JOIN users_boardgames ub ON ub.boardgame_type == b.id
-        LEFT JOIN photos p ON p.boardgame_id = b.id
-        WHERE ub.user_id == ?
-        GROUP BY b.id;
+        LEFT JOIN categories c ON b.category_id = c.id
+        LEFT JOIN ratings r ON r.boardgame_id = b.id
+        LEFT JOIN users_boardgames ub ON ub.boardgame_type = b.id
+        WHERE ub.user_id = ?
+        GROUP BY b.id
         LIMIT ?
         OFFSET ?;
     """, (user_id, int(os.getenv("PAGE_SIZE")), page_num * int(os.getenv("PAGE_SIZE"))))
 
     if len(result) > 0:
-        return list(map(lambda result: Boardgame(result[0], result[1], result[2], result[3], result[4], result[5], result[6], category=result[7], stars=result[8], half_star=bool(result[9])), result))
+        return list(map(lambda r: Boardgame(r[0], r[1], r[2], r[3], r[4], r[5], r[6], category=r[7], stars=r[8], half_star=bool(r[9])), result))
     return None
 
 def get_number_of_user_boardgames(user_id: int) -> int:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    n = conn.read("SELECT COUNT(id) FROM users_boardgames WHERE user_id == ?", (user_id,))
+    n = conn.read("SELECT COUNT(id) FROM users_boardgames WHERE user_id = ?", (user_id,))
     return n[0][0]
 
 def get_all_boardgames_by_search_word(search_word: str, page_num: int) -> list[Boardgame] | None:
@@ -381,12 +375,12 @@ def get_all_boardgames_by_search_word(search_word: str, page_num: int) -> list[B
             CAST(AVG(r.rating) AS INTEGER) AS stars,
             IIF(AVG(r.rating) - FLOOR(AVG(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
         FROM boardgames b
-        LEFT JOIN categories c ON b.category_id == c.id
-        LEFT JOIN ratings r ON r.boardgame_id == b.id
-        LEFT JOIN users_boardgames ub ON ub.boardgame_type == b.id
+        LEFT JOIN categories c ON b.category_id = c.id
+        LEFT JOIN ratings r ON r.boardgame_id = b.id
+        LEFT JOIN users_boardgames ub ON ub.boardgame_type = b.id
         WHERE b.name LIKE ?
         GROUP BY b.id
-        HAVING COALESCE(SUM(ub.user_games), 0) + COALESCE(SUM(ub.reserved_user_games), 0) > 0;
+        HAVING COALESCE(SUM(ub.user_games), 0) + COALESCE(SUM(ub.reserved_user_games), 0) > 0
         LIMIT ?
         OFFSET ?;
     """, (f"%{search_word}%", int(os.getenv("PAGE_SIZE")), page_num * int(os.getenv("PAGE_SIZE"))))
@@ -400,7 +394,7 @@ def get_boardgame_categories() -> list[tuple[int, str]] | None:
     result = conn.read("""
         SELECT id, category
         FROM categories
-        ORDER BY IIF(id == 0, 1, 0), id;
+        ORDER BY IIF(id = 0, 1, 0), id;
     """)
 
     if len(result) > 0:
@@ -412,8 +406,8 @@ def get_boardgame_photo_by_boardgame_name_and_photo_id(name: str, photo_id: int)
     result = conn.read("""
         SELECT p.name, p.id, p.file_format, p.photo
         FROM photos p
-        JOIN boardgames b ON p.boardgame_id == b.id
-        WHERE b.name == ? AND p.id == ?;
+        JOIN boardgames b ON p.boardgame_id = b.id
+        WHERE b.name = ? AND p.id = ?;
     """, (name, photo_id))
 
     if len(result) > 0:
@@ -972,11 +966,11 @@ def get_boardgame_photo_by_boardgame_name_and_photo_id(name: str, photo_id: int)
 def add_boardgame_photo_by_boardgame_name(boardgame_name: str, photo_name: str, photo: bytes, file_format: str) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     conn.write("""
-        INSERT INTO photos (boardgame_id, photo_id, name, file_format, photo)
-        SELECT 
+        INSERT INTO photos (boardgame_id, id, name, file_format, photo)
+        SELECT
             b.id,
             COALESCE((
-                SELECT max(p.photo_id) + 1
+                SELECT MAX(p.id) + 1
                 FROM photos p
                 WHERE p.boardgame_id = b.id
             ), 0),
@@ -996,8 +990,8 @@ def get_reviews_by_boardgame_id(boardgame_id: int, page_num: int) -> list[Review
             CAST(r.rating AS INTEGER) AS stars,
             IIF(r.rating - FLOOR(r.rating) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
         FROM ratings r
-        LEFT JOIN users u ON u.id == r.user_id
-        WHERE r.boardgame_id == ?
+        LEFT JOIN users u ON u.id = r.user_id
+        WHERE r.boardgame_id = ?
         LIMIT ?
         OFFSET ?;
     """, (boardgame_id, int(os.getenv("PAGE_SIZE")), page_num * int(os.getenv("PAGE_SIZE"))))
@@ -1008,12 +1002,12 @@ def get_reviews_by_boardgame_id(boardgame_id: int, page_num: int) -> list[Review
 
 def get_number_of_user_ratings(user_id: int) -> int:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    n = conn.read("SELECT COUNT(*) FROM ratings WHERE user_id == ?", (user_id,))
+    n = conn.read("SELECT COUNT(*) FROM ratings WHERE user_id = ?", (user_id,))
     return n[0][0]
 
 def get_number_of_boardgame_reviews(boardgame_id: int) -> int:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    n = conn.read("SELECT COUNT(id) FROM reviews WHERE boardgame_id == ?", (boardgame_id,))
+    n = conn.read("SELECT COUNT(id) FROM ratings WHERE boardgame_id = ?", (boardgame_id,))
     return n[0][0]
 
 def get_user_review_stats(user_id: int) -> tuple[int, int, bool] | None:
@@ -1024,8 +1018,8 @@ def get_user_review_stats(user_id: int) -> tuple[int, int, bool] | None:
             CAST(SUM(r.rating) AS INTEGER) AS stars,
             IIF(SUM(r.rating) - FLOOR(SUM(r.rating)) BETWEEN 0.25 AND 0.75, 1, 0) AS half_star
         FROM ratings r
-        LEFT JOIN users u ON u.id == r.user_id
-        WHERE u.id == ?;
+        LEFT JOIN users u ON u.id = r.user_id
+        WHERE u.id = ?;
     """, (user_id,))
 
     if len(result) > 0:
@@ -1040,10 +1034,9 @@ def upsert_review(boardgame_id: int, review: Review) -> None:
         ON CONFLICT(boardgame_id, user_id) DO UPDATE SET
             rating = excluded.rating,
             review = excluded.review
-        WHERE excluded.boardgame_id == ratings.boardgame_id AND
-            excluded.user_id == ratings.user_id;
-    """,
-    (boardgame_id, review.user.id, review.rating, review.text))
+        WHERE excluded.boardgame_id = ratings.boardgame_id AND
+            excluded.user_id = ratings.user_id;
+    """, (boardgame_id, review.user.id, review.rating, review.text))
 
 def insert_reservation(user_id: int, boardgame_id: int, start: datetime, end: datetime) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
@@ -1051,7 +1044,7 @@ def insert_reservation(user_id: int, boardgame_id: int, start: datetime, end: da
         SELECT user_games, reserved_user_games, user_id
         FROM users_boardgames
         WHERE user_games - reserved_user_games > 0
-          AND boardgame_type == ?
+          AND boardgame_type = ?
         ORDER BY user_id ASC
         LIMIT 1;
     """, (boardgame_id,))
@@ -1078,8 +1071,8 @@ def has_user_reserved_boardgame(user_id: int, boardgame_id: int) -> bool:
     reserved = conn.read("""
         SELECT 1
         FROM reservation
-        WHERE reserver == ?
-            AND boardgame_id == ?
+        WHERE reserver = ?
+            AND boardgame_id = ?
             AND ? BETWEEN start_time AND end_time
     """, (user_id, boardgame_id, date))
 
@@ -1093,14 +1086,13 @@ def can_be_reserved(boardgame_id: int, start: datetime, end: datetime) -> bool:
         SELECT NOT EXISTS (
             SELECT 1
             FROM reservation
-            WHERE boardgame_id == ?
+            WHERE boardgame_id = ?
             AND NOT (
                 end_time <= ?
                 OR start_time >= ?
             )
         );
     """, (boardgame_id, start, end))
-
     return bool(can_reserved[0][0])
 
 def get_boardgame_names_with_user_has_active_reservation(user_id: int, page_num: int) -> list[str] | None:
@@ -1109,14 +1101,14 @@ def get_boardgame_names_with_user_has_active_reservation(user_id: int, page_num:
     reservations = conn.read("""
         SELECT b.name
         FROM reservation r
-        LEFT JOIN boardgames b ON b.id == r.boardgame_id
+        LEFT JOIN boardgames b ON b.id = r.boardgame_id
         WHERE ? BETWEEN r.start_time AND r.end_time
-            AND r.reserver == ?
+            AND r.reserver = ?
         LIMIT ?
         OFFSET ?;
     """, (date, user_id, int(os.getenv("PAGE_SIZE")), page_num * int(os.getenv("PAGE_SIZE"))))
 
-    if len(reservations) == 0:
+    if len(reservations) = 0:
         return None
     return [name[0] for name in reservations]
 
@@ -1126,8 +1118,8 @@ def set_boardgame_returned(boardgame: Boardgame, user_id: int) -> None:
     conn.write("""
         UPDATE reservation
         SET end_time = ?
-        WHERE boardgame_id == ?
-            AND reserver == ?
+        WHERE boardgame_id = ?
+            AND reserver = ?
     """, (date, boardgame.id, user_id))
 
 def get_number_of_user_reservations(user_id: int) -> int:
@@ -1136,7 +1128,7 @@ def get_number_of_user_reservations(user_id: int) -> int:
     n = conn.read("""
         SELECT COUNT(*)
         FROM reservation
-        WHERE reserver == ?
+        WHERE reserver = ?
           AND ? BETWEEN start_time AND end_time
     """, (user_id, date))
     return n[0][0]
