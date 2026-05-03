@@ -108,6 +108,10 @@
                         {{ plus_minus_number_input(n) }}
                     </div>
                     <textarea name="description" class="description-input">{% if boardgame %}{{ boardgame.description }}{% endif %}</textarea>
+                    {% if error_text_boardgame %}
+                        <p>error_text_boardgame</p>
+                    {% endif %}
+
                     <div class="boardgame-page-edit-row" style="margin-top: 6px;">
                         <button name="target" value="confirm" type="submit">✓</button>
                         <button name="target" value="cancel" type="submit">✖</button>

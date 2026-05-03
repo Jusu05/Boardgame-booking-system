@@ -153,7 +153,7 @@ def index_validate_category_id():
         if category_id == "-1":
             category_id = "^-?[0-9]+$"
 
-        max_category_id = db.get_boardgame_categories()
+        max_category_id = db.get_max_boardgame_category_id()
         if int(category_id) > max_category_id:
             return str(max_category_id)
 
@@ -352,13 +352,32 @@ def boardgame(boardgame_name: str) -> Response | str:
         user_reserved_game = users_has_boardgames = False
         today = next_day = next_month = None
 
-    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month, user_reserved_game=user_reserved_game, review_page=review_page)
+    return render_template(
+        "boardgame.html",
+        boardgame=boardgame,
+        reviews=reviews,
+        users_has_boardgames=users_has_boardgames,
+        photo=photo,
+        today=today,
+        next_day=next_day,
+        next_month=next_month,
+        user_reserved_game=user_reserved_game,
+        review_page=review_page,
+    )
 
 @login_required
 def boardgame_edit(boardgame: Boardgame, reviews: list[Review], photo: Photo, review_page: tuple) -> str:
     boardgame_categories = db.get_boardgame_categories()
-    user_boardgames, _ = db.get_users_game_count_by_boardgame_id(boardgame.id)
-    return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, boardgame_categories=boardgame_categories, n=user_boardgames, photo=photo, edit_photos=True, review_page=review_page)
+    user_boardgames, reserved_user_boardgames = db.get_users_game_count_by_boardgame_id(boardgame.id)
+    return render_template(
+        "boardgame.html",
+        boardgame=boardgame,reviews=reviews,
+        boardgame_categories=boardgame_categories,
+        n=user_boardgames+reserved_user_boardgames,
+        photo=photo,
+        edit_photos=True,
+        review_page=review_page
+    )
 
 @login_required
 def boardgame_delete(boardgame: Boardgame, reviews: list[Review], photo: Photo, review_page: tuple) -> str:
@@ -378,14 +397,35 @@ def boardgame_delete_confirm(boardgame_name: str) -> Response:
     return redirect("/")
 
 @login_required
-def boardgame_update(boardgame_name: str) -> Response:
-    boardgame = Boardgame.from_form(request.form)
-    if "users_games" in session:
-        db.update_boardgame(boardgame, session["users_games"])
-        del session["users_games"]
-    else:
-        db.update_boardgame(boardgame)
-    return redirect(f"/boardgame/{boardgame_name}")
+def boardgame_update(reviews: list[Review], photo: Photo, review_page: tuple) -> Response:
+    boardgame, error_text = Boardgame.from_form(request.form)
+    if error_text:
+        if "users_games" in session:
+            db.update_boardgame(boardgame, session["users_games"])
+            del session["users_games"]
+        else:
+            db.update_boardgame(boardgame)
+        return redirect(f"/boardgame/{boardgame.name}")
+
+    boardgame = db.get_boardgame_by_name(boardgame.name)
+    boardgame.update(request.form)
+    photo = db.get_boardgame_photo_by_boardgame_name_and_photo_id(
+        boardgame.name,
+        request.form.get("photo_id", 0, int)
+    )
+    boardgame_categories = db.get_boardgame_categories()
+    user_boardgames, reserved_user_boardgames = db.get_users_game_count_by_boardgame_id(boardgame.id)
+    return render_template(
+        "boardgame.html",
+        boardgame=boardgame,
+        reviews=reviews,
+        boardgame_categories=boardgame_categories,
+        n=user_boardgames+reserved_user_boardgames,
+        photo=photo,
+        edit_photos=True,
+        review_page=review_page,
+        error_text_boardgame=error_text
+    )
 
 @login_required
 def boardgame_review(boardgame: Boardgame) -> Response:
@@ -503,12 +543,28 @@ def add_boardgame_create() -> str:
 
 @login_required
 def add_boardgame_confirm() -> Response:
-    boardgame = Boardgame.from_form(request.form)
-    if "users_games" in session:
-        db.update_boardgame(boardgame, session.pop("users_games"))
-    else:
-        db.update_boardgame(boardgame)
-    return redirect("/")
+    boardgame, error_text = Boardgame.from_form(request.form)
+    if not error_text:
+        if "users_games" in session:
+            db.update_boardgame(boardgame, session.pop("users_games"))
+        else:
+            db.update_boardgame(boardgame)
+        return redirect("/")
+
+    session["new_game_added"] = request.form["boardgame_name"]
+    boardgame_categories = db.get_boardgame_categories()
+    boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
+    photo = Photo(None, 0, None, None)
+    return render_template(
+        "boardgame.html",
+        boardgame=boardgame,
+        boardgame_categories=boardgame_categories,
+        photo=photo,
+        n=0,
+        edit_photos=True,
+        error_text_boardgame=error_text
+    )
+
 
 @login_required
 def add_boardgame_cancel() -> Response:
@@ -536,9 +592,9 @@ def add_boardgame_minus() -> str:
 
 def add_boardgame_photo() -> str:
     photo = request.files["photo"]
-    db.add_boardgame_photo_by_boardgame_name(request.form["name"], photo.filename, photo.read(), photo.mimetype)
+    db.add_boardgame_photo_by_boardgame_name(request.form["boardgame_name"], photo.filename, photo.read(), photo.mimetype)
     boardgame_categories = db.get_boardgame_categories()
-    boardgame = db.get_boardgame_by_name(request.form["name"])
+    boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
     photo = db.get_boardgame_photo_by_boardgame_name_and_photo_id(boardgame.id, boardgame.number_of_photos - 1)
     return render_template("boardgame.html", boardgame=boardgame, boardgame_categories=boardgame_categories, photo=photo, edit_photos=True)
 
