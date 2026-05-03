@@ -172,27 +172,53 @@ def make_page_tuple(page: int, total: int, page_size: int) -> tuple[int, int, in
 
 @app.route("/login", methods=["GET", "POST"])
 def login()-> Response | str:
+    error_text = None
     if request.method == "POST":
         username = request.form["username"]
         user = db.get_user_by_username(username)
 
-        if user and check_password_hash(user.password, request.form["password"]):
+        if user and check_password_hash(
+            user.password,
+            request.form["password_1"]
+        ):
             login_user(user)
             return redirect("/")
         else:
-            flash("Väärä salasana tai käyttäjätunnus")
+            error_text = "Väärä salasana tai käyttäjätunnus"
 
-    return render_template("login.html", login_screen=True)
+    return render_template(
+        "login.html",
+        login_screen=True,
+        error_text=error_text
+    )
 
 @app.route("/create_user", methods=["GET", "POST"])
 def create_user() -> Response | str:
     if request.method == "POST":
-        username = request.form["username"]
-        password = generate_password_hash(request.form["password"])
+        error_text = "Käyttäjää ei voi luoda:"
+        if not request.form["username"] and len(request.form["username"]) > 100:
+            error_text += "käyttäjä nimi liian pitkä"
+        if not request.form["password_1"] \
+            and len(request.form["password_1"]) < 12:
+            error_text += "\nsalasana pitää olla vähintään 12 merkkiä pitkä"
+        if not request.form["password_2"] \
+            and request.form["password_2"] != request.form["password_1"]:
+            error_text += "\nsalasanat eivät ole samoja"
+
+        password = generate_password_hash(request.form["password1"])
+
         try:
-            db.insert_user(username, password)
-        except Exception:
-            flash("Käyttäjää ei voi luoda")
+            db.insert_user(request.form["username"], password)
+        except DatabaseError:
+            error_text += "\n valitse toinen käyttäjä nimi"
+        
+        if error_text != "Käyttäjää ei voi luoda:":
+            return render_template(
+                "login.html",
+                login_screen=False,
+                error_text=error_text
+            )
+
         return redirect("/")
     return render_template("login.html", login_screen=False)
 
