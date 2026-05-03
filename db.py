@@ -54,22 +54,7 @@ def insert_user(username: str, password: str) -> None:
         raise ValueError("username is longer than 100 character")
     conn.write("INSERT INTO users (username, password) VALUES (?,?);", (username, password))
 
-def add_avatar(user_id: int, avatar):
-    conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    conn.write("UPDATE users SET avatar = ? WHERE id = ?;", (avatar, user_id))
-
 def get_avatar_by_username(username: str) -> Photo:
-    conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    result = conn.read("""
-        SELECT a.file_format, a.avatar 
-        FROM avatars a
-        JOIN users u ON u.id = a.user_id
-        WHERE u.username = ?;
-    """, (username,))
-
-    if len(result) > 0:
-        return Photo(f"{username} avatar", None, result[0][1], result[1][2])
-
     b = bytes.fromhex("""
         89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52 00 00 01 f4 00 00 01 f4
         08 06 00 00 00 cb d6 df 8a 00 00 00 01 73 52 47 42 01 d9 c9 2c 7f 00 00

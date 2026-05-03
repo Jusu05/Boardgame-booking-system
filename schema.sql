@@ -4,13 +4,6 @@ CREATE TABLE IF NOT EXISTS users (
     password TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS avatars (
-    user_id INTEGER PRIMARY KEY,
-    file_format TEXT NOT NULL,
-    avatar BLOB NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS users_boardgames (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
