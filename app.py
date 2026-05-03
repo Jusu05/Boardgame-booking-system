@@ -316,9 +316,9 @@ def boardgame(boardgame_name: str) -> Response | str:
             case "cancel":
                 pass
             case "confirm":
-                return boardgame_update(boardgame_name)
+                return boardgame_update(reviews, photo, review_page)
             case "review":
-                return boardgame_review(boardgame)
+                return boardgame_review(boardgame, reviews, photo, review_page)
             case "edit":
                 return boardgame_edit(boardgame, reviews, photo, review_page)
             case "delete":
@@ -429,10 +429,29 @@ def boardgame_update(reviews: list[Review], photo: Photo, review_page: tuple) ->
     )
 
 @login_required
-def boardgame_review(boardgame: Boardgame) -> Response:
-    review = Review.from_form(request.form)
-    db.upsert_review(boardgame.id, review)
-    return redirect(f"/boardgame/{boardgame.name}")
+def boardgame_review(boardgame: Boardgame, reviews: list[Review], photo: Photo, review_page: tuple) -> Response:
+    review, error_text = Review.from_form(request.form)
+    if not error_text:
+        db.upsert_review(boardgame.id, review)
+        return redirect(f"/boardgame/{boardgame.name}")
+    
+    users_boardgames = db.get_user_boardgame_ids(current_user.id)
+    users_has_boardgames = boardgame.id in users_boardgames
+    today, next_day, next_month = get_dates()
+    user_reserved_game = db.has_user_reserved_boardgame(current_user.id, boardgame.id)
+    
+    return render_template(
+        "boardgame.html",
+        boardgame=boardgame,
+        reviews=reviews,
+        users_has_boardgames=users_has_boardgames,
+        photo=photo,
+        today=today,
+        next_day=next_day,
+        next_month=next_month,
+        user_reserved_game=user_reserved_game,
+        review_page=review_page,
+    )
 
 @login_required
 def boardgame_plus(boardgame: Boardgame, reviews: list[Review], photo: Photo, review_page: tuple) -> str:
