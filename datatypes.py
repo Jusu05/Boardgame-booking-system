@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from security import UserMixin, current_user
-
+import db
 
 @dataclass
 class User(UserMixin):
@@ -38,14 +38,41 @@ class Boardgame:
         self.description = form["description"]
         self.category_id = int(form["category_id"])
 
-    def from_form(form: dict) -> 'Boardgame':
+    def from_form(form: dict) -> tuple['Boardgame', str | None]:
+        error_text = "Virhe lautapelin lisäämisessä:"
+
+        if form["boardgame_name"] and len(form["boardgame_name"]) > 101:
+            error_text += "\n lautapelin nimi liian pitkä"
+
+        if form["number_of_players"] \
+            and int(form["number_of_players"]) > 101 \
+            and int(form["number_of_players"]) < 0:
+            error_text += "\n pelaajia on likaa tai liian vähän"
+
+        if form["duration"] \
+            and int(form["duration"]) > 60 * 24 \
+            and int(form["duration"]) < 0:
+            error_text += "\n pelin kesto on liian lyhyt tai liian pitkä"
+
+        if form["description"] and len(form["duration"]) > 1000:
+            error_text += "\n pelin kuvaus on liian pitkä"
+
+        max_category_id = db.get_max_boardgame_category_id()
+        if form["category_id"] \
+            and int(form["category_id"]) < 0 \
+            and int(form["category_id"]) > max_category_id:
+            error_text += "\n väärä pelin luokka"
+
+        if error_text == "Virhe lautapelin lisäämisessä:":
+            error_text = None
+
         return Boardgame(
-            form["name"],
+            form["boardgame_name"],
             int(form["number_of_players"]),
             float(form["duration"]),
             description=form["description"],
             category_id=int(form["category_id"]),
-        )
+        ), error_text
 
 
 class Review:
