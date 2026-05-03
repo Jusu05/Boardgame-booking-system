@@ -42,6 +42,9 @@
                                 <h4>Uuden kuvan lisääminen</h4>
                                 <input type="file" name="photo" accept="image/*"><br><br>
                                 <button name="target" value="photo" type="submit">Lisää</button>
+                                {% if error_text_photo %}
+                                    <p>{{ error_text_photo }}</p>
+                                {% endif %}
                             </div>
                         </div>
                     {% else %}
