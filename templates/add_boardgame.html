@@ -50,6 +50,9 @@
     <form id="new_game" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <input type="hidden" name="boardgame_name" value="{{ search_word }}">
+        {% if error_text %}
+            <p>{{ error_text }}</p>
+        {% endif %}
         <button name="target" value="create" type="submit">Eikö löydy, luo uusi</button>
     </form>
 {% endif %}

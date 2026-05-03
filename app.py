@@ -550,16 +550,31 @@ def add_boardgame_edit() -> str:
 
 @login_required
 def add_boardgame_create() -> str:
-    try:
-        db.insert_boardgame(request.form["boardgame_name"], current_user.id)
-    except DatabaseError:
-        return add_boardgame_edit()
+    error_text = None
+    if request.form["boardgame_name"] and len(request.form["boardgame_name"]) > 100:
+        error_text = "Virhe lautapeliä luodessa pelin nimi liian pitkä"
 
-    session["new_game_added"] = request.form["boardgame_name"]
-    boardgame_categories = db.get_boardgame_categories()
-    boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
-    photo = Photo(None, 0, None, None)
-    return render_template("boardgame.html", boardgame=boardgame, boardgame_categories=boardgame_categories, photo=photo, n=0, edit_photos=True)
+    if error_text:
+        try:
+            db.insert_boardgame(request.form["boardgame_name"], current_user.id)
+        except DatabaseError:
+            return add_boardgame_edit()
+
+        session["new_game_added"] = request.form["boardgame_name"]
+        boardgame_categories = db.get_boardgame_categories()
+        boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
+        photo = Photo(None, 0, None, None)
+        return render_template("boardgame.html", boardgame=boardgame, boardgame_categories=boardgame_categories, photo=photo, n=0, edit_photos=True)
+
+    search_word = request.form.get("search_word")
+    target = request.form.get("target", "")
+    page = int(target.split(" ", 1)[1]) - 1
+    total = db.get_number_of_boardgames()
+    page_size = int(os.getenv("PAGE_SIZE"))
+    boardgame_page = make_page_tuple(page, total, page_size)
+    boardgames = db.search_boardgames(request.form["search_word"], page)
+
+    return render_template("add_boardgame.html", boardgames=boardgames, search_word=search_word, boardgame_page=boardgame_page, error_text=error_text)
 
 @login_required
 def add_boardgame_confirm() -> Response:
