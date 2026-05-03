@@ -5,7 +5,7 @@
 {% block content %}
 <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-    <input type="hidden" name="selected review" value="{{ review_page[0] if review_page else 0 }}">
+    <input type="hidden" name="selected review" value="{{ review_page_info[0] if review_page_info else 0 }}">
     {% if delete %}
         <div class="confirmation-overlay">
             <div class="confirmation-box">
@@ -176,8 +176,8 @@
                         <p class="text">{{ review.text }}</p>
                     </div>
                 {% endfor %}
-                {% if review_page %}
-                    {{ page_selector_input(review_page[0], review_page[1], review_page[2], "review") }}
+                {% if review_page_info %}
+                    {{ page_selector_input(review_page_info[0], review_page_info[1], review_page_info[2], "review") }}
                 {% endif %}
             {% endif %}
         </div>

@@ -6,7 +6,7 @@
 <div class="search-container">
     <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <input type="hidden" name="selected boardgames" value="{{ boardgame_page[0] if boardgame_page else 0 }}">
+        <input type="hidden" name="selected boardgames" value="{{ boardgame_page_info[0] if boardgame_page_info else 0 }}">
         <input type="hidden" name="better search bool" value="{{ better_search if better_search else False }}">
         <input type="text" name="search_word">
         <button name="target" value="better search bool" type="submit">▼</button>
@@ -49,7 +49,7 @@
 
 <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-    <input type="hidden" name="selected boardgames" value="{{ boardgame_page[0] if boardgame_page else 0 }}">
+    <input type="hidden" name="selected boardgames" value="{{ boardgame_page_info[0] if boardgame_page_info else 0 }}">
 
     <div>
         {% if boardgames %}
@@ -69,8 +69,8 @@
                     </div>
                 </a>
             {% endfor %}
-            {% if boardgame_page %}
-                {{ page_selector_input(boardgame_page[0], boardgame_page[1], boardgame_page[2], "boardgames") }}
+            {% if boardgame_page_info %}
+                {{ page_selector_input(boardgame_page_info[0], boardgame_page_info[1], boardgame_page_info[2], "boardgames") }}
             {% endif %}
         {% endif %}
     </div>

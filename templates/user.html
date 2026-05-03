@@ -49,8 +49,8 @@
                         <button name="return" value="{{ name }}" type="submit">Palauta</button>
                     </div>
                 {% endfor %}
-                {% if ratings_page %}
-                    {{ page_selector_input(ratings_page[0], ratings_page[1], ratings_page[2], "ratings") }}
+                {% if reservation_page_info %}
+                    {{ page_selector_input(reservation_page_info[0], reservations_page_info[1], reservations_page_info[2], "ratings") }}
                 {% endif %}
             </div>
         {% else %}

@@ -10,7 +10,13 @@ class User(UserMixin):
 
 
 class Photo:
-    def __init__(self, name: str | None, id: int | None, file_type: str | None, bytes: bytes | None) -> None:
+    def __init__(
+        self,
+        name: str | None,
+        id: int | None,
+        file_type: str | None,
+        bytes: bytes | None
+    ) -> None:
         self.name = name
         self.id = id
         self.file_type = file_type
@@ -18,7 +24,21 @@ class Photo:
 
 
 class Boardgame:
-    def __init__(self, name: str, number_of_players: int, duration: int, id: int | None = None, description: int | None = None, free_games: int | None = None, reserved_games: int | None = None, category: str | None = None, category_id: int | None = None, stars: int | None = None, half_star: bool | None = None, number_of_photos: bool | None = None) -> None:
+    def __init__(
+        self,
+        name: str,
+        number_of_players: int,
+        duration: int,
+        id: int | None = None,
+        description: int | None = None,
+        free_games: int | None = None,
+        reserved_games: int | None = None,
+        category: str | None = None,
+        category_id: int | None = None,
+        stars: int | None = None,
+        half_star: bool | None = None,
+        number_of_photos: bool | None = None
+    ) -> None:
         self.name = name
         self.description = description
         self.number_of_players = number_of_players
@@ -76,14 +96,16 @@ class Boardgame:
 
 
 class Review:
-    def __init__(self, user: User, text: str | None, rating: float, stars: int | None = None, half_star: bool | None = None):
+    def __init__(self, user: User, text: str | None, rating: float,
+            stars: int | None = None, half_star: bool | None = None
+        ):
         self.user = user
         self.text = text
         self.rating = rating
         self.stars = stars
         self.half_star = half_star
 
-    def from_form(form, user: User) -> 'Review':
+    def from_form(form: dict, user: User) -> 'Review':
         error_text = "Virhe arvostelua lisätessä:"
         if form["text"] and len(form["text"]) > 500:
             error_text += "\narvostelun teksti on liian pitkä"
@@ -123,6 +145,7 @@ class Review:
             return other + self.rating
         else:
             raise ValueError(f"Can't add Review and {type(other)}")
+
 
 class DatabaseError(Exception):
     def __init__(self, *args) -> None:
