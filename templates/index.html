@@ -7,8 +7,43 @@
     <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <input type="hidden" name="selected boardgames" value="{{ boardgame_page[0] if boardgame_page else 0 }}">
-        <input type="text" name="search_word" required>
-        <button type="submit">Hae</button>
+        <input type="hidden" name="better search bool" value="{{ better_search if better_search else False }}">
+        <input type="text" name="search_word">
+        <button name="target" value="better search bool" type="submit">▼</button>
+        {% if not better_search%}
+                <button name="target" value="search" type="submit">Hae</button>
+            </form>
+        {% else %}
+</div>
+            <div>
+                <h4>Tarkennettu haku</h4>
+                <div style="display: flex; gap: 3px;">
+                    <p>Pelin kesto:</p>
+                    <input type="number" name="duration longer">
+                    <p>-</p>
+                    <input type="number" name="duration shorter">
+                </div>
+                <div style="display: flex; gap: 3px;">
+                    <p>Pelaaja määrä:</p>
+                    <input type="number" name="more players">
+                    <p>-</p>
+                    <input type="number" name="less players">
+                </div>
+                <div style="display: flex; gap: 3px;">
+                    <div class="selector-wrapper">
+                        <select name="category_id" id="category_id">
+                            <option value=-1>Hae pelin luokan mukaan</option>
+                            {% if boardgame_categories%}
+                                {% for boardgame_category in boardgame_categories %}
+                                    <option value={{ boardgame_category[0] }}>{{ boardgame_category[1] }}</option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+                </div>
+                <button name="target" value="better search" type="submit">Hae</button>
+            </div>
+        {% endif %}
     </form>
 </div>
 
