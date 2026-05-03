@@ -339,8 +339,6 @@ def boardgame_page(boardgame_name: str) -> Response | str:
 
     if request.method == "POST":
         match request.form.get("target"):
-            case "cancel":
-                pass
             case "confirm":
                 return boardgame_page_update(reviews, photo, review_page_info)
             case "review":
@@ -403,8 +401,6 @@ def boardgame_page(boardgame_name: str) -> Response | str:
                 )
             case "return":
                 db.set_boardgame_returned(boardgame, current_user.id)
-            case _:
-                pass
 
     if current_user.is_authenticated:
         users_boardgames = db.get_user_boardgame_ids(current_user.id)
