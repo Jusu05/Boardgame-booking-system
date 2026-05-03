@@ -1,5 +1,6 @@
 import re
 import os
+import sys
 from flask import Flask, render_template, redirect, request, flash, session, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
@@ -592,11 +593,22 @@ def add_boardgame_minus() -> str:
 
 def add_boardgame_photo() -> str:
     photo = request.files["photo"]
-    db.add_boardgame_photo_by_boardgame_name(request.form["boardgame_name"], photo.filename, photo.read(), photo.mimetype)
+    error_text = None
+    if sys.getsizeof(photo.read(), 0) > 100000:
+        error_text = "Lisättävä kuva on liian suuri"
+    if not error_text:
+        db.add_boardgame_photo_by_boardgame_name(request.form["boardgame_name"], photo.filename, photo.read(), photo.mimetype)
     boardgame_categories = db.get_boardgame_categories()
     boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
     photo = db.get_boardgame_photo_by_boardgame_name_and_photo_id(boardgame.id, boardgame.number_of_photos - 1)
-    return render_template("boardgame.html", boardgame=boardgame, boardgame_categories=boardgame_categories, photo=photo, edit_photos=True)
+    return render_template(
+        "boardgame.html",
+        boardgame=boardgame,
+        boardgame_categories=boardgame_categories,
+        photo=photo,
+        edit_photos=True,
+        error_text_photo=error_text
+    )
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
