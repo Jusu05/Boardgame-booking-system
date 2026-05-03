@@ -1,6 +1,11 @@
-import base64, hmac, hashlib, os, time
+import base64
+import hmac
+import hashlib
+import os
+import time
 from functools import wraps
-from flask import Flask, abort, redirect, url_for, g, current_app, session, request
+from flask import Flask, abort, redirect, url_for, g, current_app, session, \
+    request
 
 
 class UserMixin:
@@ -94,10 +99,10 @@ def _get_login_manager() -> LoginManager:
     try:
         return current_app.extensions["login_manager"]
     except KeyError:
-        raise RuntimeError(
-            "LoginManager not initialised. Call LoginManager(app) or "
-            "login_manager.init_app(app) before using auth helpers."
-        )
+        raise RuntimeError("""
+            LoginManager not initialised. Call LoginManager(app) or
+            login_manager.init_app(app) before using auth helpers.
+        """)
 
 def login_user(user, remember: bool = False) -> bool:
     if not user.is_active:
@@ -147,7 +152,7 @@ class CSRFProtect:
         self._secret = app.secret_key
         self._exempt_endpoints: set[str] = set()
 
-        self.SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
+        self.safe_methods = {"GET", "HEAD", "OPTIONS"}
         self.max_age = max_age
 
         if not self._secret:
@@ -201,7 +206,7 @@ class CSRFProtect:
         return g._csrf_token
 
     def _csrf_protect(self) -> None:
-        if request.method in self.SAFE_METHODS:
+        if request.method in self.safe_methods:
             return
 
         if request.endpoint in self._exempt_endpoints:
