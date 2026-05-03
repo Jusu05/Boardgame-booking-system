@@ -1,7 +1,8 @@
+import re
+import os
 from flask import Flask, render_template, redirect, request, flash, session, Response
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
-import os
 
 import db
 from security import CSRFProtect, LoginManager, login_user, login_required, logout_user, current_user
@@ -33,28 +34,135 @@ def inject_flags() -> dict:
 @app.route("/", methods=["GET", "POST"])
 def index() -> str:
     page = request.form.get("selected boardgames", 0, int)
+    error_text = None
+    better_search = request.form.get("better search bool", False, type=bool)
+    boardgames = None
 
     if request.method == "POST":
-        match request.form.get("target"):
+        target = request.form.get("target", "")
+        match target:
             case "next page boardgames":
                 page += 1
             case "previous page boardgames":
                 page = max(0, page - 1)
-            case _ as t if t and t.startswith("boardgames"):
-                page = int(t.split(" ", 1)[1]) - 1
+            case _ as target:
+                if target and target.startswith("boardgames"):
+                    page = int(target.split(" ", 1)[1]) - 1
 
-    if request.method == "POST" and "search_word" in request.form:
-        boardgames = db.get_all_boardgames_by_search_word(request.form["search_word"], page)
-    else:
-        boardgames = db.get_boardgame_page(page)
+        match target:
+            case "search":
+                search_word = request.form.get("search_word", "")
+                if len(search_word) < 101:
+                    boardgames = db.search_boardgames(
+                        search_word,
+                        0,
+                        2**31 - 1,
+                        "'^-?[0-9]+$'",
+                        0,
+                        2**31 - 1,
+                        page
+                    )
+                else:
+                    boardgames = None
+            case "better search bool":
+                try:
+                    error_text = ""
+                    duration_longer, duration_shorter, error_text_time = index_validate_time_search()
+                    error_text += error_text_time
+
+                    more_players, less_players, error_text_player = index_validate_player_search()
+                    error_text += "\n" + error_text_player
+
+                    category_id = index_validate_category_id()
+                    error_text = error_text.strip()
+                    
+                    if len(error_text) < 0:
+                        boardgames = db.search_boardgames(
+                            search_word,
+                            duration_longer,
+                            duration_shorter,
+                            category_id,
+                            more_players,
+                            less_players,
+                            page
+                        )
+                        error_text = None
+                    else:
+                        boardgames = None
+
+                except ValueError:
+                    boardgames = None
+            case "better search active":
+                boardgames = db.get_boardgame_page(page)
+                better_search = not request.form["better search bool"]
+            case _:
+                boardgames = db.get_boardgame_page(page)
 
     total = db.get_number_of_boardgames()
     page_size = int(os.getenv("PAGE_SIZE"))
     boardgame_page = make_page_tuple(page, total, page_size)
 
-    if boardgames:
-        return render_template("index.html", boardgames=boardgames, boardgame_page=boardgame_page)
-    return render_template("index.html", boardgame_page=boardgame_page)
+    boardgame_categories = db.get_boardgame_categories()
+
+    return render_template(
+        "index.html",
+        boardgames,
+        boardgame_page=boardgame_page,
+        better_search=better_search,
+        boardgame_categories=boardgame_categories,
+        error_text=error_text
+    )
+
+def index_validate_time_search():
+    duration_longer = request.form.get("duration longer", 0, key=int)
+    duration_shorter = request.form.get("duration shorter", 24 * 60, key=int)
+
+    error_text = ""
+    if duration_longer > duration_shorter:
+        error_text = "Lyhin aika on pidempi kuin pisin aika"
+
+    if duration_longer < duration_shorter:
+        error_text = "Pisin aika on lyhyempi kuin lyhin aika"
+
+    return duration_longer, duration_shorter, error_text
+
+def index_validate_player_search():
+    more_players = request.form.get("more players", 0, key=int)
+    less_players = request.form.get("less players", 100, key=int)
+
+    if more_players < 0:
+        more_players = 0
+
+    if less_players > 101:
+        less_players = 100
+
+    error_text = ""
+    if more_players > less_players:
+        error_text = "Pelaajien pienin määrä on suurempi kuin pienin määrä"
+
+    if more_players < less_players:
+        error_text = "Pelaajien suurin määrä on pienempi kuin pienin määrä"
+
+    return more_players, less_players, error_text
+
+def index_validate_category_id():
+    if request.form["category_id"] \
+        and re.fullmatch(request.form["category_id"], "^-?[0-9]+$"):
+        category_id = request.form["category_id"]
+
+        if category_id == "-1":
+            category_id = "^-?[0-9]+$"
+
+        max_category_id = db.get_boardgame_categories()
+        if int(category_id) > max_category_id:
+            return str(max_category_id)
+
+        if int(category_id) < 0:
+            return "0"
+
+        return category_id
+    else:
+        return "^-?[0-9]+$"
 
 def make_page_tuple(page: int, total: int, page_size: int) -> tuple[int, int, int]:
     page_count = max(1, -(-total // page_size))
@@ -331,7 +439,7 @@ def add_boardgame() -> Response | str:
             case "photo":
                 return add_boardgame_photo()
             case "search":
-                boardgames = db.get_all_boardgames_by_search_word(request.form["search_word"], page)
+                boardgames = db.search_boardgames(request.form["search_word"], page)
             case "cancel":
                 return add_boardgame_cancel()
             case _:

@@ -345,7 +345,15 @@ def get_number_of_user_boardgames(user_id: int) -> int:
     n = conn.read("SELECT COUNT(id) FROM users_boardgames WHERE user_id = ?", (user_id,))
     return n[0][0]
 
-def get_all_boardgames_by_search_word(search_word: str, page_num: int) -> list[Boardgame] | None:
+def search_boardgames(
+    search_word: str,
+    longer_duration: int,
+    shorter_duration: int,
+    category_id: str,
+    more_players: int,
+    less_players: int,
+    page_num: int
+) -> list[Boardgame] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read("""
         SELECT
@@ -364,11 +372,24 @@ def get_all_boardgames_by_search_word(search_word: str, page_num: int) -> list[B
         LEFT JOIN ratings r ON r.boardgame_id = b.id
         LEFT JOIN users_boardgames ub ON ub.boardgame_type = b.id
         WHERE b.name LIKE ?
+            AND b.number_of_players BETWEEN ? AND ?
+            AND b.duration BETWEEN ? AND ?
+            AND b.category_id REGEXP ?
         GROUP BY b.id
         HAVING COALESCE(SUM(ub.user_games), 0) + COALESCE(SUM(ub.reserved_user_games), 0) > 0
         LIMIT ?
         OFFSET ?;
-    """, (f"%{search_word}%", int(os.getenv("PAGE_SIZE")), page_num * int(os.getenv("PAGE_SIZE"))))
+    """, (
+            f"%{search_word}%",
+            int(os.getenv("PAGE_SIZE")),
+            more_players,
+            less_players,
+            longer_duration,
+            shorter_duration,
+            f"'{category_id}'",
+            page_num * int(os.getenv("PAGE_SIZE"))
+        )
+    )
 
     if len(result) > 0:
         return list(map(lambda result: Boardgame(result[0], result[1], result[2], result[3], result[4], result[5], result[6], category=result[7], stars=result[8], half_star=bool(result[9])), result))
@@ -385,6 +406,14 @@ def get_boardgame_categories() -> list[tuple[int, str]] | None:
     if len(result) > 0:
         return result
     return [(0, "muu")]
+
+def get_max_boardgame_category_id() -> int:
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    result = conn.read("SELECT MAX(id) FROM categories")
+
+    if len(result) > 0:
+        return result[0][0]
+    return 0
 
 def get_boardgame_photo_by_boardgame_name_and_photo_id(name: str, photo_id: int) -> Photo:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
@@ -1093,7 +1122,7 @@ def get_boardgame_names_with_user_has_active_reservation(user_id: int, page_num:
         OFFSET ?;
     """, (date, user_id, int(os.getenv("PAGE_SIZE")), page_num * int(os.getenv("PAGE_SIZE"))))
 
-    if len(reservations) = 0:
+    if len(reservations) == 0:
         return None
     return [name[0] for name in reservations]
 
