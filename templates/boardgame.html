@@ -159,6 +159,9 @@
                         </div>
                     </div>
                     <input type="text" class="boardgame-review-input" name="text" placeholder="Arvostelu">
+                    {% if error_text_review %}
+                        <p>{{ error_text_review }}</p>
+                    {% endif %}
                     <button name="target" value="review" type="submit">✓</button>
                 </div>
             {% endif %}

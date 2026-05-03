@@ -83,12 +83,26 @@ class Review:
         self.stars = stars
         self.half_star = half_star
 
-    def from_form(form) -> 'Review':
-        return Review(
-            current_user,
-            form["text"],
+    def from_form(form, user: User) -> 'Review':
+        error_text = "Virhe arvostelua lisätessä:"
+        if form["text"] and len(form["text"]) > 500:
+            error_text += "\narvostelun teksti on liian pitkä"
+        try:
             float(form["rating"])
-        )
+        except Exception:
+            error_text += "\narvosteluun ei ole lisätty tähtiä"
+
+        if 0 < float(form["rating"]) < 5:
+            error_text += "\ntähti arvostelu on liian iso"
+
+        if error_text == "Virhe arvostelua lisätessä:":
+            error_text = None
+
+        return Review(
+            user,
+            form["text"],
+            5-float(form["rating"])
+        ), error_text
 
     def __add__(self, other) -> float:
         if isinstance(other, Review):
