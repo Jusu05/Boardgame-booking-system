@@ -52,7 +52,10 @@ def insert_user(username: str, password: str) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     if len(username) > 100:
         raise ValueError("username is longer than 100 character")
-    conn.write("INSERT INTO users (username, password) VALUES (?,?);", (username, password))
+    try:
+        conn.write("INSERT INTO users (username, password) VALUES (?,?);", (username, password))
+    except sqlite3.Error as e:
+        raise DatabaseError from e
 
 def get_avatar_by_username(username: str) -> Photo:
     b = bytes.fromhex("""
