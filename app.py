@@ -119,7 +119,7 @@ def index() -> str:
         error_text=error_text
     )
 
-def index_validate_time_search():
+def index_validate_time_search() -> tuple[int, int, str]:
     duration_longer = request.form.get("duration longer", 0, type=int)
     duration_shorter = request.form.get("duration shorter", 24 * 60, type=int)
 
@@ -132,7 +132,7 @@ def index_validate_time_search():
 
     return duration_longer, duration_shorter, error_text
 
-def index_validate_player_search():
+def index_validate_player_search() -> tuple[int, int, str]:
     more_players = request.form.get("more players", 0, type=int)
     less_players = request.form.get("less players", 100, type=int)
     more_players = max(more_players, 0)
