@@ -120,8 +120,8 @@ def index() -> str:
     )
 
 def index_validate_time_search():
-    duration_longer = request.form.get("duration longer", 0, key=int)
-    duration_shorter = request.form.get("duration shorter", 24 * 60, key=int)
+    duration_longer = request.form.get("duration longer", 0, type=int)
+    duration_shorter = request.form.get("duration shorter", 24 * 60, type=int)
 
     error_text = ""
     if duration_longer > duration_shorter:
@@ -133,8 +133,8 @@ def index_validate_time_search():
     return duration_longer, duration_shorter, error_text
 
 def index_validate_player_search():
-    more_players = request.form.get("more players", 0, key=int)
-    less_players = request.form.get("less players", 100, key=int)
+    more_players = request.form.get("more players", 0, type=int)
+    less_players = request.form.get("less players", 100, type=int)
     more_players = max(more_players, 0)
     less_players = min(less_players, 100)
 
