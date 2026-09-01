@@ -1,6 +1,5 @@
 import sqlite3, os
-from datatypes import Boardgame, Photo, Review, User
-from security import current_user
+from datatypes import Boardgame, Photo, Review, User, DatabaseError
 
 class SqlConnection:
     def __init__(self, file: str) -> None:
@@ -157,6 +156,12 @@ def update_boardgame(boardgame: Boardgame, user_id: int, users_games: int = None
             """,
             (users_games, user_id, boardgame.id)
         )
+
+def delete_boardgame(boardgame: Boardgame, user_id: int) -> None:
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    conn.write("DROP FROM photos WHERE boardgame_id == ?;", (boardgame.id,))
+    conn.write("DROP FROM users_boardgames WHERE boardgame_id == ? AND user_id == ?;", (boardgame.id, user_id))
+    conn.write("DROP FROM boardgames WHERE boardgame_id == ?;", (boardgame.id, user_id))
 
 def get_boardgame_by_name(boardgame_name: str) -> Boardgame | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))

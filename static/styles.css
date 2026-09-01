@@ -390,3 +390,8 @@ select {
   background: rgba(0, 0, 0, 0.55);
   z-index: 1000;
 }
+
+.button-none-style {
+    background: var(--background);
+    border: 0;
+}
