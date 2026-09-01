@@ -7,7 +7,7 @@ def find_dotenv_path() -> Path:
         if item.is_file() and item.name == ".env":
             return item
 
-def load_dotenv():
+def load_dotenv() -> None:
     env_file = find_dotenv_path()
     with open(env_file, "r", encoding="utf-8") as file:
         lines: list[str] = file.readlines()
@@ -60,7 +60,7 @@ def parse_singleline_quotes(quote_char: str, line: str) -> str:
             return value
         value += char 
 
-def parse_multiline_quotes(value: str, i: int, lines: list[str], seen: set[int]):
+def parse_multiline_quotes(value: str, i: int, lines: list[str], seen: set[int]) -> str:
     value = value + "\n"
     for j, line in enumerate(lines[i+1:]):
         k = line.find("`")

@@ -15,7 +15,7 @@ from db import insert_user, get_user_by_id, get_user_by_username, get_avatar_by_
     upsert_review, get_reviews_by_boardgame_id, get_user_review_stats
 from security import CSRFProtect, LoginManager, login_user, login_required, logout_user, current_user
 from env_parser import load_dotenv
-from datatypes import Review, Boardgame
+from datatypes import Boardgame, Photo, Review, User
 
 load_dotenv()
 
@@ -29,11 +29,11 @@ login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
 @login_manager.user_loader
-def load_user(user_id: int):
+def load_user(user_id: int) -> User | None:
     return get_user_by_id(user_id)
 
 @app.context_processor
-def inject_flags():
+def inject_flags() -> dict:
     flags = dict()
     if current_user.is_authenticated:
         flags["username"] = current_user.username
@@ -65,7 +65,7 @@ def login():
     return render_template("login.html", login_screen=True)
 
 @app.route("/create_user", methods=["GET", "POST"])
-def create_user():
+def create_user() -> Response | str:
     if request.method == "POST":
         username = request.form["username"]
         password = generate_password_hash(request.form["password"])
