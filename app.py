@@ -147,24 +147,27 @@ def index_validate_player_search():
 
     return more_players, less_players, error_text
 
-def index_validate_category_id():
-    if request.form["category_id"] \
-        and re.fullmatch(request.form["category_id"], "^-?[0-9]+$"):
-        category_id = request.form["category_id"]
+def index_validate_category_id() -> int | None:
+    if not request.form["category_id"]:
+        return None
 
-        if category_id == "-1":
-            category_id = "^-?[0-9]+$"
+    if not re.fullmatch(request.form["category_id"], "^-?[0-9]+$"):
+        return None
 
-        max_category_id = db.get_max_boardgame_category_id()
-        if int(category_id) > max_category_id:
-            return str(max_category_id)
+    category_id = request.form.get("category_id", type=int)
 
-        if int(category_id) < 0:
-            return "0"
+    if category_id == -1:
+        return None
 
-        return category_id
+    max_category_id = db.get_max_boardgame_category_id()
+    if category_id > max_category_id:
+        return max_category_id
 
-    return "^-?[0-9]+$"
+    if category_id < 0:
+        return 0
+
+    return category_id
+
 
 def make_page_info_tuple(
     page: int,
