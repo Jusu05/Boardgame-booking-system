@@ -200,9 +200,16 @@ def boardgame_reserve(boardgame: Boardgame, reviews: list[Review], photo) -> str
     users_boardgames = db.get_user_boardgame_ids(current_user.id)
     users_has_boardgames = boardgame.id in users_boardgames
     today, next_day, next_month = get_dates()
-    
-    # TODO reservation logic
+    boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
+    start = datetime.fromisoformat(request.form["booking-start"])
+    end = datetime.fromisoformat(request.form["booking-end"])
 
+    if db.can_be_reserved(boardgame.id, start, end):
+        db.insert_reservation(boardgame.id, start, end)
+    else:
+        return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month, cannot_reserve=True)
+
+    
     return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, users_has_boardgames=users_has_boardgames, photo=photo, today=today, next_day=next_day, next_month=next_month)
 
 def get_dates():
@@ -219,24 +226,36 @@ def boardgame_photo(boardgame_name: str, id: int) -> Response:
 @app.route("/add_boardgame", methods=["GET", "POST"])
 @login_required
 def add_boardgame() -> Response | str:
-    boardgame_categories = db.get_boardgame_categories()
+    boardgames = None
     if request.method == "POST":
         match request.form["target"]:
+            case "edit":
+                return add_boardgame_edit()
+            case "create":
+                return add_boardgame_create()
             case "confirm":
-                boardgame = Boardgame.from_form(request.form)
-                if "users_games" in session:
-                    db.insert_boardgame(boardgame, session.pop("users_games"))
-                else:
-                    db.insert_boardgame(boardgame)
+                return add_boardgame_confirm()
             case "plus":
                 return add_boardgame_plus()
             case "minus":
                 return add_boardgame_minus()
             case "photo":
-                return add_boargame_photo()
-    
-        return redirect("/")
+                return add_boardgame_photo()
+            case "search":
+                boardgames = db.get_all_boardgames_by_search_word(request.form["search_word"])
+            case "cancel":
+                return add_boardgame_cancel()
+            case _:
+                return redirect("/")
 
+    search_word = request.form.get("search_word")
+    return render_template("add_boardgame.html", boardgames=boardgames, search_word=search_word)
+
+@login_required
+def add_boardgame_edit() -> str:
+    boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
+    photo = db.get_boardgame_photo_by_boardgame_name_and_photo_id(boardgame.name, request.form.get("photo_id", 0, type=int))
+    boardgame_categories = db.get_boardgame_categories()
     n = session.get("users_games", 1)
     return render_template("boardgame.html", boardgame=boardgame, boardgame_categories=boardgame_categories, photo=photo, n=n, edit_photos=True)
 
