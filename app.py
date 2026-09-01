@@ -81,12 +81,12 @@ def boardgame(boardgame_name: str):
 
     if boardgame:
         if request.method == "POST":
-            try:
-                boardgame = Boardgame.from_form(request.form)
-            except KeyError:
+            if "edit" in request.form:
                 boardgame_categories = get_boardgame_categories()
-                return render_template("add_boardgame.html", boardgame=boardgame, boardgame_categories=boardgame_categories)
-            update_boardgame(boardgame)
+                return render_template("boardgame.html", boardgame=boardgame, reviews=reviews, boardgame_categories=boardgame_categories)
+            elif "update" in request.form:
+                boardgame = Boardgame.from_form(request.form)
+                update_boardgame(boardgame)
 
         return render_template("boardgame.html", boardgame=boardgame, reviews=reviews)
 

@@ -5,6 +5,17 @@
 {% block content %}
 <div class="boardgame-page">
     <div class="boardgame-page-image-column">
+        {% if boardgame %}
+            <div class="boardgame-tools">
+                {% if username %}
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="hidden" name="edit" value=""/>
+                    <button class="edit-button" type="submit">✎</button>
+                <form>
+                {% endif %}
+            </div>
+        {% endif %}
         <div class="boardgame-image"></div>
         <div class="boardgame-image-selector">
             <svg class="arrow" viewBox="0 0 14 14" fill="none">
@@ -20,22 +31,59 @@
         </div>
     </div>
     <div class="boardgame-info">
-        <h1 class="boardgame-title">{{ boardgame.name }}</h1>
-        {% if boardgame.stars %}
+        {% if boardgame %}
+            <h1 class="boardgame-title">{{ boardgame.name }}</h1>
+        {% else %}
+            <input type="text" class="boardgame-title-input" name="name">
+        {% endif %}
+        {% if boardgame and boardgame.stars %}
             {{ stars(boardgame.stars, boardgame.half_star, "boardgame-page-heading-stars") }}
         {% endif %}
-        <p class="property">Pelaaja määrä: {{ boardgame.number_of_players }}</p>
-        <p class="property">Kesto: {{ boardgame.duration }} min</p>
-        <p class="property">Luokka: {{ boardgame.category }}</p>
-        <p class="description">{{ boardgame.description }}</p>
+        {% if boardgame_categories %}
+            {% if boardgame %}<form>{% endif %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="hidden" name="update" value=""/>
+                <div class="boardgame-page-edit-row">
+                    <p class="property">Pelaaja määrä:</p>
+                    <input type="number" class="player-number-input" name="number_of_players" placeholder={% if boardgame %} {{ boardgame.number_of_players }} {% else %} 4 required {% endif %}>
+                </div>
+                <div class="boardgame-page-edit-row">
+                    <p class="property">Kesto:</p>
+                    <input type="number" class="boardgame-duration-input" name="duration" placeholder={% if boardgame %} {{ boardgame.duration }} {% else %} 30 required {% endif %}>
+                    <p class="property">min</p>
+                </div>
+                <div class="boardgame-page-edit-row">
+                    <p class="property">Luokka:</p>
+                    <div class="selector-wrapper">
+                        <select name="category_id" id="category_id" {% if boardgame %} selected={{ boardgame.category_id }} {% endif %}>
+                            {% if not boardgame %}
+                                <option value=0>Valitse pelin luokka</option>
+                            {% endif %}
+                            {% if boardgame_categories %}
+                                {% for boardgame_category in boardgame_categories %}
+                                    <option value={{ boardgame_category[0] }}>{{ boardgame_category[1] }}</option>
+                                {% endfor %}
+                            {% endif %}
+                        </select>
+                    </div>
+                </div>
+                <textarea name="description" class="description-input">{% if boardgame %} {{ boardgame.description }} {% endif %}</textarea>
+                <div class="boardgame-page-edit-row" style="margin-top: 6px;">
+                    <button type="submit">✓</button>
+                </form>
+                <form>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit">✖</button>
+                </form>
+                </div>
+        {% else %}
+            <p class="property">Pelaaja määrä: {{ boardgame.number_of_players }}</p>
+            <p class="property">Kesto: {{ boardgame.duration }} min</p>
+            <p class="property">Luokka: {{ boardgame.category }}</p>
+            <p class="description">{{ boardgame.description }}</p>
+        {% endif %}
     </div>
 
-    {% if username %}
-    <form method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        <button type="submit">Muokkaa peliä</button>
-    <form>
-    {% endif %}
 </div>
 <div class="reviews">
     {% if reviews %}
