@@ -430,7 +430,7 @@ def search_boardgames(
     search_word: str,
     longer_duration: int,
     shorter_duration: int,
-    category_id: str,
+    category_id: int | None,
     more_players: int,
     less_players: int,
     page_num: int
@@ -448,7 +448,7 @@ def search_boardgames(
             c.category,
             CAST(AVG(r.rating) AS INTEGER) AS stars,
             IIF(
-                AVG(r.rating) - FLOOR(AVG(r.rating)
+                AVG(r.rating) - FLOOR(AVG(r.rating))
                 BETWEEN 0.25 AND 0.75, 1, 0
             ) AS half_star
         FROM boardgames b
@@ -458,7 +458,7 @@ def search_boardgames(
         WHERE b.name LIKE ?
             AND b.number_of_players BETWEEN ? AND ?
             AND b.duration BETWEEN ? AND ?
-            AND b.category_id REGEXP ?
+            AND (b.category_id = ? OR ? IS NULL)
         GROUP BY b.id
         HAVING COALESCE(
             SUM(ub.user_games), 0) + COALESCE(SUM(ub.reserved_user_games), 0
@@ -467,13 +467,14 @@ def search_boardgames(
         OFFSET ?;
     """, (
             f"%{search_word}%",
-            int(os.getenv("PAGE_SIZE")),
             more_players,
             less_players,
             longer_duration,
             shorter_duration,
-            f"'{category_id}'",
-            page_num * int(os.getenv("PAGE_SIZE"))
+            category_id,
+            category_id,
+            int(os.getenv("PAGE_SIZE")),
+            page_num * int(os.getenv("PAGE_SIZE")),
         )
     )
 
@@ -487,9 +488,10 @@ def search_boardgames(
             ),
             result)
         )
+
     return None
 
-def get_boardgame_categories() -> list[tuple[int, str]] | None:
+def get_boardgame_categories() -> list[tuple[int, str]]:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read("""
         SELECT id, category

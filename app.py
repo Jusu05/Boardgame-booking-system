@@ -61,7 +61,7 @@ def index() -> str:
                         search_word,
                         0,
                         10 * 60,
-                        "'^-?[0-9]+$'",
+                        None,
                         0,
                         100,
                         page
@@ -694,7 +694,7 @@ def add_boardgame() -> Response | str:
                         search_word,
                         0,
                         10 * 60,
-                        "'^-?[0-9]+$'",
+                        None,
                         0,
                         100,
                         page
@@ -776,7 +776,7 @@ def add_boardgame_create() -> str:
             search_word,
             0,
             10 * 60,
-            "'^-?[0-9]+$'",
+            None,
             0,
             100,
             page
