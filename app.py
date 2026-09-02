@@ -38,7 +38,8 @@ def inject_flags() -> dict:
 @app.route("/", methods=["GET", "POST"])
 def index() -> str:
     page = request.form.get("selected boardgames", 0, int)
-    better_search = request.form.get("better search bool", False, type=bool)
+    better_search = request.form.get("better search bool")
+    better_search = convert_text_to_bool(better_search)
     error_text = None
     boardgames = None
 
@@ -98,9 +99,10 @@ def index() -> str:
 
                 except ValueError:
                     boardgames = None
-            case "better search active":
+            case "better search activate":
                 boardgames = db.get_boardgame_page(page)
-                better_search = not request.form["better search bool"]
+                better_search = not better_search
+
             case _:
                 boardgames = db.get_boardgame_page(page)
 
@@ -118,6 +120,9 @@ def index() -> str:
         boardgame_categories=boardgame_categories,
         error_text=error_text
     )
+
+def convert_text_to_bool(text: str | None) -> bool:
+    return text and text in {"true", "True", "1"}
 
 def index_validate_time_search() -> tuple[int, int, str]:
     duration_longer = request.form.get("duration longer", 0, type=int)

@@ -347,7 +347,7 @@ def get_boardgame_page(page_num: int) -> list[Boardgame] | None:
             SUM(ub.user_games) AS free_games,
             SUM(ub.reserved_user_games) AS reserved_games,
             c.category,
-            CAST(AVG(r.rating) AS INTEGER)
+            CAST(AVG(r.rating) AS INTEGER),
             IIF(
                 AVG(r.rating) - FLOOR(AVG(r.rating))
                        BETWEEN 0.25 AND 0.75, 1, 0
