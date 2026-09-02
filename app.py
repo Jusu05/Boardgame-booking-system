@@ -189,18 +189,18 @@ def make_page_info_tuple(
 @app.route("/login", methods=["GET", "POST"])
 def login() -> Response | str:
     error_text = None
+
     if request.method == "POST":
-        username = request.form["username"]
+        username = request.form.get("username")
+        password = request.form.get("password_1")
+
         user = db.get_user_by_username(username)
 
-        if user and check_password_hash(
-            user.password,
-            request.form["password_1"]
-        ):
+        if user and password and check_password_hash(user.password, password):
             login_user(user)
             return redirect("/")
-        else:
-            error_text = "Väärä salasana tai käyttäjätunnus"
+
+        error_text = ["Väärä salasana tai käyttäjätunnus"]
 
     return render_template(
         "login.html",
