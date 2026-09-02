@@ -148,10 +148,12 @@ def index_validate_player_search() -> tuple[int, int, str]:
     return more_players, less_players, error_text
 
 def index_validate_category_id() -> int | None:
-    if not request.form["category_id"]:
+    category_id = request.form.get("category_id", None)
+
+    if not category_id:
         return None
 
-    if not re.fullmatch(request.form["category_id"], "^-?[0-9]+$"):
+    if not re.fullmatch(category_id, "^-?[0-9]+$"):
         return None
 
     category_id = request.form.get("category_id", type=int)
