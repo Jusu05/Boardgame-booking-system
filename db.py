@@ -1,8 +1,7 @@
 import os
 import sqlite3
 from datetime import datetime
-from datatypes import Boardgame, Photo, Review, User
-from security import current_user
+from datatypes import Boardgame, DatabaseError, Photo, Review, User
 
 class SqlConnection:
     def __init__(self, file: str) -> None:

@@ -12,12 +12,14 @@
     <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <input type="text" name="username" placeholder="Nimi" required>
-        <input type="password_1" name="password" placeholder="Salasana" required>
+        <input type="password" name="password_1" placeholder="Salasana" required>
         {% if not login_screen %}
-            <input type="password_2" name="password" placeholder="Salasana uudestaan" required>
+            <input type="password" name="password_2" placeholder="Salasana uudestaan" required>
         {% endif %}
         {% if error_text %}
-            <p>{{ error_text }}</p>
+            {% for row in error_text %}
+                <p>{{ row }}</p>
+            {% endfor %}
         {% endif %}
 
         <button type="submit">{% if login_screen %} Kirjaudu {% else %} Luo käyttäjä {% endif %}</button>

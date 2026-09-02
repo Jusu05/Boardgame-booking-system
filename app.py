@@ -211,24 +211,27 @@ def login() -> Response | str:
 @app.route("/create_user", methods=["GET", "POST"])
 def create_user() -> Response | str:
     if request.method == "POST":
-        error_text = "Käyttäjää ei voi luoda:"
-        if not request.form["username"] and len(request.form["username"]) > 100:
-            error_text += "käyttäjä nimi liian pitkä"
-        if not request.form["password_1"] \
-            and len(request.form["password_1"]) < 12:
-            error_text += "\nsalasana pitää olla vähintään 12 merkkiä pitkä"
-        if not request.form["password_2"] \
-            and request.form["password_2"] != request.form["password_1"]:
-            error_text += "\nsalasanat eivät ole samoja"
+        error_text = ["Käyttäjää ei voi luoda:"]
+        username = request.form.get("username")
+        password_1 = request.form.get("password_1")
+        password_2 = request.form.get("password_2")
 
-        password = generate_password_hash(request.form["password1"])
+        if not username or len(username) > 100:
+            error_text.append("käyttäjä nimi liian pitkä")
+        if not password_1 or len(password_1) < 12:
+            error_text.append("salasana pitää olla vähintään 12 merkkiä pitkä")
+        if not password_2 or password_1 != password_2:
+            error_text.append("salasanat eivät ole samoja")
 
-        try:
-            db.insert_user(request.form["username"], password)
-        except DatabaseError:
-            error_text += "\n valitse toinen käyttäjä nimi"
+        if len(error_text) == 1:
+            password = generate_password_hash(password_1)
 
-        if error_text != "Käyttäjää ei voi luoda:":
+            try:
+                db.insert_user(request.form["username"], password)
+            except DatabaseError:
+                 error_text.append("valitse toinen käyttäjä nimi")
+
+        if len(error_text) > 1:
             return render_template(
                 "login.html",
                 login_screen=False,
