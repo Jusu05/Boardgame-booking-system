@@ -8,6 +8,9 @@
     <form id="search" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <input type="hidden" name="selected boardgames" value="{{ boardgame_page_info[0] if boardgame_page_info else 0 }}">
+        {% if boardgame_page_info %}
+            <input type="hidden" name="selected boardgames" value="{{ boardgame_page_info[0] }}">
+        {% endif %}
         <div style="display: flex;"> 
             <p>Lisättävän lautapelin nimi:</p>
             <input type="text" name="search_word" value="{{ search_word or '' }}" required>
@@ -50,6 +53,9 @@
     <form id="new_game" method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <input type="hidden" name="boardgame_name" value="{{ search_word }}">
+        {% if boardgame_page_info %}
+            <input type="hidden" name="selected boardgames" value="{{ boardgame_page_info[0] }}">
+        {% endif %}
         {% if error_text %}
             <p>{{ error_text }}</p>
         {% endif %}

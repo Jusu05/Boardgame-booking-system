@@ -752,20 +752,21 @@ def add_boardgame_edit() -> str:
 @login_required
 def add_boardgame_create() -> str:
     error_text = None
-    if request.form["boardgame_name"] \
-        and len(request.form["boardgame_name"]) > 100:
+    boardgame_name = request.form.get("boardgame_name")
+    if boardgame_name and len(boardgame_name) > 100:
         error_text = "Virhe lautapeliä luodessa pelin nimi liian pitkä"
 
-    if error_text:
+    if not error_text:
         try:
-            db.insert_boardgame(request.form["boardgame_name"], current_user.id)
+            db.insert_boardgame(boardgame_name, current_user.id)
         except DatabaseError:
             return add_boardgame_edit()
 
-        session["new_game_added"] = request.form["boardgame_name"]
+        session["new_game_added"] = boardgame_name
         boardgame_categories = db.get_boardgame_categories()
-        boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
+        boardgame = db.get_boardgame_by_name(boardgame_name)
         photo = Photo(None, 0, None, None)
+
         return render_template(
             "boardgame.html",
             boardgame=boardgame,
@@ -775,13 +776,14 @@ def add_boardgame_create() -> str:
             edit_photos=True
         )
 
+    boardgames = None
     search_word = request.form.get("search_word")
-    target = request.form.get("target", "")
-    page = int(target.split(" ", 1)[1]) - 1
+    page = request.form.get("target", 1, type=int) - 1
     total = db.get_number_of_boardgames()
     page_size = int(os.getenv("PAGE_SIZE"))
     boardgame_page_info = make_page_info_tuple(page, total, page_size)
-    if len(search_word) < 100:
+
+    if search_word and len(search_word) < 100:
         boardgames = db.search_boardgames(
             search_word,
             0,
@@ -791,8 +793,6 @@ def add_boardgame_create() -> str:
             100,
             page
         )
-    else:
-        boardgames = None
 
     return render_template(
         "add_boardgame.html",
