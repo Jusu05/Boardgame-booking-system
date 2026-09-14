@@ -110,7 +110,7 @@
                         <p class="property">Lautapelien määrä:</p>
                         {{ plus_minus_number_input(n) }}
                     </div>
-                    <textarea name="description" class="description-input">{% if boardgame %}{{ boardgame.description }}{% endif %}</textarea>
+                    <textarea name="description" class="description-input">{% if boardgame and boardgame.description %}{{ boardgame.description }}{% endif %}</textarea>
                     {% if error_text_boardgame %}
                         <p>error_text_boardgame</p>
                     {% endif %}
