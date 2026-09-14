@@ -844,11 +844,16 @@ def add_boardgame_plus() -> str:
     boardgame.update(request.form)
     boardgame_categories = db.get_boardgame_categories()
     session["users_games"] = session.get("users_games", 1) + 1
+    photo = db.get_photo_by_boardgame_name_and_photo_id(
+        boardgame.name,
+        boardgame.number_of_photos - 1
+    )
     return render_template(
         "boardgame.html",
         boardgame=boardgame,
         boardgame_categories=boardgame_categories,
         n=session["users_games"],
+        photo=photo,
         edit_photos=True
     )
 
@@ -858,9 +863,14 @@ def add_boardgame_minus() -> str:
     boardgame.update(request.form)
     session["users_games"] = max(1, session.get("users_games", 1) - 1)
     boardgame_categories = db.get_boardgame_categories()
+    photo = db.get_photo_by_boardgame_name_and_photo_id(
+        boardgame.name,
+        boardgame.number_of_photos - 1
+    )
     return render_template("boardgame.html",
         boardgame_categories=boardgame_categories,
         n=session["users_games"],
+        photo=photo,
         edit_photos=True
     )
 
