@@ -878,8 +878,18 @@ def add_boardgame_minus() -> str:
 def add_boardgame_photo() -> str:
     photo = request.files["photo"]
     error_text = None
+    
     if sys.getsizeof(photo.read(), 0) > 100000:
         error_text = "Lisättävä kuva on liian suuri"
+
+    if photo.mimetype not in {
+        "image/png", 
+        "image/jpeg",
+        "image/tiff",
+        "image/webp"
+    }:
+        error_text = "Tiedosto tyyppiä ei tueta"
+
     if not error_text:
         db.add_boardgame_photo_by_boardgame_name(
         request.form["boardgame_name"],
