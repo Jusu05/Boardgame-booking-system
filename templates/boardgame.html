@@ -6,6 +6,7 @@
 <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <input type="hidden" name="selected review" value="{{ review_page_info[0] if review_page_info else 0 }}">
+    <input name="photo_id" value="{{ photo.id }}" type="hidden">
     {% if delete %}
         <div class="confirmation-overlay">
             <div class="confirmation-box">
@@ -25,18 +26,16 @@
     <div>
         <div class="boardgame-page">
             <div class="boardgame-page-image-column">
-                {% if boardgame %}
+                {% if boardgame and username and users_has_boardgames%}
                     <div class="boardgame-tools">
-                        {% if username and users_has_boardgames %}
-                            <button name="target" value="edit" type="submit">✎</button>
-                            <button name="target" value="delete" type="submit">🗑</button>
-                        {% endif %}
+                        <button name="target" value="edit" type="submit">✎</button>
+                        <button name="target" value="delete" type="submit">🗑</button>
                     </div>
                 {% endif %}
                 {% if not edit_photos %}
                     <img class="boardgame-image" src="/boardgame/{{ boardgame.name }}/photo/{{ photo.id }}" alt="{{ photo.name }}">
                 {% else %}
-                    {% if photo.id + 1 == boardgame.number_of_photos %}
+                    {% if photo.id + 1 == boardgame.number_of_photos or photo.name == "oletus lautapelin kuva" %}
                         <div class="boardgame-image">
                             <div class="photo-add-form">
                                 <h4>Uuden kuvan lisääminen</h4>
@@ -51,9 +50,8 @@
                         <img class="boardgame-image" src="/boardgame/{{ boardgame.name }}/photo/{{ photo.id }}" alt="{{ photo.name }}">
                     {% endif %}
                 {% endif %}
-                <div class="boardgame-image-selector">
-                    <input name="photo_id" value="{{ photo.id }}" type="hidden">
-                    {% if boardgame and boardgame.number_of_photos > 1%}
+                {% if boardgame and boardgame.number_of_photos > 1%}
+                    <div class="boardgame-image-selector">
                         <button name="target" value="next photo" type="submit">◀</button>
                         {% if not add_boardgame %}
                             {% for i in range(boardgame.number_of_photos) %}
@@ -73,8 +71,8 @@
                             {% endfor %}
                         {% endif%}
                         <button name="target" value="previous photo" type="submit">▶</button>
-                    {% endif %}
-                </div>
+                    </div>
+                {% endif %}
             </div>
             <div class="boardgame-info">
                 <h1 class="boardgame-title">{{ boardgame.name }}</h1>

@@ -123,6 +123,12 @@
     border: 1.5px solid var(--border-color);
     border-radius: 20px;
     background: var(--background);
+    display: flex;
+    justify-content: center;
+}
+
+.photo-add-form {
+    margin-top: 30%;
 }
 
 .boardgame-image-selector {
