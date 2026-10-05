@@ -2,8 +2,19 @@
 
 {% block title %}Lautapeli varaamo{% endblock %}
 
+{% macro photo_selector(number_photos, photo_id) -%}
+    {% for i in range(boardgame.number_of_photos + 1) %}
+        {% if i == photo.id %}
+            <p class="dot">•</p>
+        {% else %}
+            <p class="dot inactive">•</p>
+        {% endif %}
+    {% endfor %}
+{%- endmacro %}
+
+
 {% block content %}
-<form method="POST">
+<form method="POST" enctype="multipart/form-data">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <input type="hidden" name="selected review" value="{{ review_page_info[0] if review_page_info else 0 }}">
     <input name="photo_id" value="{{ photo.id }}" type="hidden">
@@ -26,51 +37,46 @@
     <div>
         <div class="boardgame-page">
             <div class="boardgame-page-image-column">
-                {% if boardgame and username and users_has_boardgames%}
+                {% set photo_count = boardgame.number_of_photos if boardgame else 0 %}
+                {% set total_slots = photo_count + (1 if edit_photos else 0) %}
+                {% set is_add_slot = edit_photos and (photo.id == photo_count or photo.name == "oletus lautapelin kuva" or not photo.name) %}
+
+                {% if boardgame and username and users_has_boardgames %}
                     <div class="boardgame-tools">
-                        <button name="target" value="edit" type="submit">✎</button>
-                        <button name="target" value="delete" type="submit">🗑</button>
+                        <button name="target" value="edit" type="submit" aria-label="Muokkaa">✎</button>
+                        <button name="target" value="delete" type="submit" aria-label="Poista">🗑</button>
                     </div>
                 {% endif %}
-                {% if not edit_photos %}
-                    <img class="boardgame-image" src="/boardgame/{{ boardgame.name }}/photo/{{ photo.id }}" alt="{{ photo.name }}">
-                {% else %}
-                    {% if photo.id + 1 == boardgame.number_of_photos or photo.name == "oletus lautapelin kuva" %}
-                        <div class="boardgame-image">
-                            <div class="photo-add-form">
-                                <h4>Uuden kuvan lisääminen</h4>
-                                <input type="file" name="photo" accept=".png,.jpg,.jpeg,.tiff,.webp,image/png,image/jpeg,image/tiff,image/webp"><br><br>
-                                <button name="target" value="photo" type="submit">Lisää</button>
-                                {% if error_text_photo %}
-                                    <p>{{ error_text_photo }}</p>
-                                {% endif %}
-                            </div>
+
+                {% if is_add_slot %}
+                    <div class="boardgame-image">
+                        <div class="photo-add-form">
+                            <h4>Uuden kuvan lisääminen</h4>
+                            <input type="file" name="photo"
+                                accept=".png,.jpg,.jpeg,.tiff,.webp,image/png,image/jpeg,image/tiff,image/webp">
+                            <button name="target" value="photo" type="submit">Lisää</button>
+                            {% if error_text_photo %}
+                                <p>{{ error_text_photo }}</p>
+                            {% endif %}
                         </div>
-                    {% else %}
-                        <img class="boardgame-image" src="/boardgame/{{ boardgame.name }}/photo/{{ photo.id }}" alt="{{ photo.name }}">
-                    {% endif %}
+                    </div>
+                {% else %}
+                    <img class="boardgame-image"
+                        src="/boardgame/{{ boardgame.name }}/photo/{{ photo.id }}"
+                        alt="{{ photo.name }}">
                 {% endif %}
-                {% if boardgame and boardgame.number_of_photos > 1%}
+
+                {% if boardgame and total_slots > 1 %}
                     <div class="boardgame-image-selector">
-                        <button name="target" value="next photo" type="submit">◀</button>
-                        {% if not add_boardgame %}
-                            {% for i in range(boardgame.number_of_photos) %}
-                                {% if i == photo.number %}
-                                    <p class="dot">•</p>
-                                {% else %}
-                                    <p class="dot inactive">•</p>
-                                {% endif %}
-                            {% endfor %}
-                        {% else %}
-                            {% for i in range(boardgame.number_of_photos + 1) %}
-                                {% if i == photo.number %}
-                                    <p class="dot">•</p>
-                                {% else %}
-                                    <p class="dot inactive">•</p>
-                                {% endif %}
-                            {% endfor %}
-                        {% endif%}
-                        <button name="target" value="previous photo" type="submit">▶</button>
+                        {% if photo.id > 0 %}
+                            <button name="target" value="previous photo" type="submit">◀</button>
+                        {% endif %}
+
+                        {{ photo_selector(total_slots, photo_id) }}
+
+                        {% if photo.id < total_slots - 1 %}
+                            <button name="target" value="next photo" type="submit">▶</button>
+                        {% endif %}
                     </div>
                 {% endif %}
             </div>

@@ -879,9 +879,6 @@ def add_boardgame_photo() -> str:
     photo = request.files["photo"]
     error_text = None
     
-    if sys.getsizeof(photo.read(), 0) > 100000:
-        error_text = "Lisättävä kuva on liian suuri"
-
     if photo.mimetype not in {
         "image/png", 
         "image/jpeg",
@@ -890,17 +887,28 @@ def add_boardgame_photo() -> str:
     }:
         error_text = "Tiedosto tyyppiä ei tueta"
 
+    photo_bytes = photo.stream.read()
+    if not error_text and sys.getsizeof(photo_bytes, 0) > 100000:
+        error_text = "Lisättävä kuva on liian suuri"
+
     if not error_text:
         db.add_boardgame_photo_by_boardgame_name(
         request.form["boardgame_name"],
         photo.filename,
-        photo.read(),
+        photo_bytes,
         photo.mimetype
-    )
+        )
+
     boardgame_categories = db.get_boardgame_categories()
-    boardgame = db.get_boardgame_by_name(request.form["name"])
+    boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
+   
+    if boardgame.number_of_photos:
+        boardgame.number_of_photos += 1
+    else:
+        boardgame.number_of_photos = 1
+   
     photo = db.get_photo_by_boardgame_name_and_photo_id(
-        boardgame.id,
+        boardgame.name,
         boardgame.number_of_photos - 1
     )
     return render_template(

@@ -6,11 +6,12 @@ from datatypes import Boardgame, DatabaseError, Photo, Review, User
 class SqlConnection:
     def __init__(self, file: str) -> None:
         self._file = file
-        self.write("PRAGMA foreign_keys = ON;")
 
     def write(self, command: str, params: tuple = None):
         connection = sqlite3.connect(self._file)
         cursor = connection.cursor()
+        cursor.execute("PRAGMA foreign_keys = ON;")
+
         if params:
             cursor.execute(command, params)
         else:
@@ -22,6 +23,7 @@ class SqlConnection:
     def read(self, command: str, params: tuple = None) -> list:
         connection = sqlite3.connect(self._file)
         cursor = connection.cursor()
+        cursor.execute("PRAGMA foreign_keys = ON;")
 
         if params:
             cursor.execute(command, params)
@@ -258,7 +260,8 @@ def update_boardgame(
         boardgame.description,
         boardgame.number_of_players,
         boardgame.duration,
-        boardgame.category_id
+        boardgame.category_id,
+        boardgame.id
     )
 
     conn.write("""
@@ -520,7 +523,7 @@ def get_photo_by_boardgame_name_and_photo_id(name: str, photo_id: int) -> Photo:
     """, (name, photo_id))
 
     if len(result) > 0:
-        return Photo(result[0], result[1], result[2], result[3])
+        return Photo(result[0][0], result[0][1], result[0][2], result[0][3])
 
     b = bytes.fromhex("""
         89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52 00 00 01 f4 00 00 01 f4

@@ -37,7 +37,7 @@ class Boardgame:
         category_id: int | None = None,
         stars: int | None = None,
         half_star: bool | None = None,
-        number_of_photos: bool | None = None
+        number_of_photos: int | None = None
     ) -> None:
         self.name = name
         self.description = description
