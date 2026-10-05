@@ -381,14 +381,14 @@ def boardgame_page(boardgame_name: str) -> Response | str:
                 boardgame.update(request.form)
                 if photo.id + 1 < boardgame.number_of_photos:
                     photo = db.get_photo_by_boardgame_name_and_photo_id(
-                        boardgame.id,
+                        boardgame.name,
                         photo.id + 1
                     )
             case "previous photo":
                 boardgame.update(request.form)
                 if photo.id - 1 >= 0:
                     photo = db.get_photo_by_boardgame_name_and_photo_id(
-                        boardgame.id,
+                        boardgame.name,
                         photo.id - 1
                     )
             case "minus":
@@ -713,9 +713,11 @@ def add_boardgame() -> Response | str:
                     boardgames = None
             case "cancel":
                 return add_boardgame_cancel()
-            case _:
-                if target.startswith("boardgames"):
-                    page = int(target.split(" ", 1)[1]) - 1
+            case "next photo":
+                return add_boardgame_next_photo()
+            case "previous photo":
+                return add_boardgame_previous_photo()
+
 
     search_word = request.form.get("search_word")
 
@@ -765,7 +767,11 @@ def add_boardgame_create() -> str:
         session["new_game_added"] = boardgame_name
         boardgame_categories = db.get_boardgame_categories()
         boardgame = db.get_boardgame_by_name(boardgame_name)
-        photo = Photo(None, 0, None, None)
+
+        if boardgame.number_of_photos and boardgame.number_of_photos - 1 >= 0:
+            photo = db.get_photo_by_boardgame_name_and_photo_id(boardgame_name, boardgame.number_of_photos-1)
+        else:
+            photo = Photo(None, 0, None, None)
 
         return render_template(
             "boardgame.html",
@@ -878,7 +884,7 @@ def add_boardgame_minus() -> str:
 def add_boardgame_photo() -> str:
     photo = request.files["photo"]
     error_text = None
-    
+
     if photo.mimetype not in {
         "image/png", 
         "image/jpeg",
@@ -906,7 +912,7 @@ def add_boardgame_photo() -> str:
         boardgame.number_of_photos += 1
     else:
         boardgame.number_of_photos = 1
-   
+
     photo = db.get_photo_by_boardgame_name_and_photo_id(
         boardgame.name,
         boardgame.number_of_photos - 1
@@ -919,6 +925,61 @@ def add_boardgame_photo() -> str:
         edit_photos=True,
         error_text_photo=error_text
     )
+
+
+def add_boardgame_next_photo() -> str:
+    boardgame_name = request.form.get("boardgame_name")
+    photo_id = request.form.get("photo_id", 0, type=int)
+
+    boardgame_categories = db.get_boardgame_categories()
+    boardgame = db.get_boardgame_by_name(boardgame_name)
+    boardgame.update(request.form)
+
+    if photo_id + 1 < boardgame.number_of_photos:
+        photo = db.get_photo_by_boardgame_name_and_photo_id(
+            boardgame.name,
+            photo_id + 1
+        )
+    else:
+        photo = Photo(None, boardgame.number_of_photos, None, None)
+
+    return render_template(
+        "boardgame.html",
+        boardgame=boardgame,
+        boardgame_categories=boardgame_categories,
+        n=session.get("users_games", 1),
+        photo=photo,
+        edit_photos=True
+    )
+
+def add_boardgame_previous_photo() -> str:
+    boardgame_name = request.form.get("boardgame_name")
+    photo_id = request.form.get("photo_id", 0, type=int)
+
+    boardgame_categories = db.get_boardgame_categories()
+    boardgame = db.get_boardgame_by_name(boardgame_name)
+    boardgame.update(request.form)
+
+    if photo_id - 1 >= 0:
+        photo = db.get_photo_by_boardgame_name_and_photo_id(
+            boardgame.name,
+            photo_id - 1
+        )
+    else:
+        photo = db.get_photo_by_boardgame_name_and_photo_id(
+            boardgame.name,
+            photo_id
+        )
+
+    return render_template(
+        "boardgame.html",
+        boardgame=boardgame,
+        boardgame_categories=boardgame_categories,
+        n=session.get("users_games", 1),
+        photo=photo,
+        edit_photos=True
+    )
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
