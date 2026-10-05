@@ -388,7 +388,7 @@ def get_user_boardgames(user_id: int, page_num: int) -> list[Boardgame] | None:
             c.category,
             CAST(AVG(r.rating) AS INTEGER) AS stars,
             IIF(
-                AVG(r.rating) - FLOOR(AVG(r.rating)
+                AVG(r.rating) - FLOOR(AVG(r.rating))
                 BETWEEN 0.25 AND 0.75, 1, 0
             ) AS half_star
         FROM boardgames b
@@ -1149,7 +1149,7 @@ def get_user_review_stats(user_id: int) -> tuple[int, int, bool] | None:
             COUNT(r.rating),
             CAST(SUM(r.rating) AS INTEGER) AS stars,
             IIF(
-                SUM(r.rating) - FLOOR(SUM(r.rating)
+                SUM(r.rating) - FLOOR(SUM(r.rating))
                 BETWEEN 0.25 AND 0.75, 1, 0
             ) AS half_star
         FROM ratings r
