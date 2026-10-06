@@ -481,7 +481,6 @@ def boardgame_delete(
         review_page_info=review_page_info
     )
 
-
 @login_required
 def boardgame_page_delete_confirm(boardgame_name: str) -> Response:
     boardgame = db.get_boardgame_by_name(boardgame_name)
@@ -835,7 +834,6 @@ def add_boardgame_confirm() -> Response:
         error_text_boardgame=error_text
     )
 
-
 @login_required
 def add_boardgame_cancel() -> Response:
     if "new_game_added" in session:
@@ -874,13 +872,14 @@ def add_boardgame_minus() -> str:
         boardgame.number_of_photos - 1
     )
     return render_template("boardgame.html",
+        boardgame=boardgame,
         boardgame_categories=boardgame_categories,
         n=session["users_games"],
         photo=photo,
         edit_photos=True
     )
 
-
+@login_required
 def add_boardgame_photo() -> str:
     photo = request.files["photo"]
     photo_id = request.form.get("photo_id", 0, type=int)
