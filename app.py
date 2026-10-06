@@ -717,7 +717,8 @@ def add_boardgame() -> Response | str:
                 return add_boardgame_next_photo()
             case "previous photo":
                 return add_boardgame_previous_photo()
-
+            case "delete photo":
+                return add_boardgame_delete_photo()
 
     search_word = request.form.get("search_word")
 
@@ -731,7 +732,6 @@ def add_boardgame() -> Response | str:
         search_word=search_word,
         boardgame_page_info=boardgame_page_info
     )
-
 
 @login_required
 def add_boardgame_edit() -> str:
@@ -883,6 +883,7 @@ def add_boardgame_minus() -> str:
 
 def add_boardgame_photo() -> str:
     photo = request.files["photo"]
+    photo_id = request.form.get("photo_id", 0, type=int)
     error_text = None
 
     if photo.mimetype not in {
@@ -897,26 +898,29 @@ def add_boardgame_photo() -> str:
     if not error_text and sys.getsizeof(photo_bytes, 0) > 100000:
         error_text = "Lisättävä kuva on liian suuri"
 
+    boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
+    
     if not error_text:
+        if boardgame.number_of_photos:
+            boardgame.number_of_photos += 1
+        else:
+            boardgame.number_of_photos = 1
+
         db.add_boardgame_photo_by_boardgame_name(
-        request.form["boardgame_name"],
-        photo.filename,
-        photo_bytes,
-        photo.mimetype
+            request.form["boardgame_name"],
+            photo.filename,
+            photo_bytes,
+            photo.mimetype
         )
 
-    boardgame_categories = db.get_boardgame_categories()
-    boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
-   
-    if boardgame.number_of_photos:
-        boardgame.number_of_photos += 1
+        photo = db.get_photo_by_boardgame_name_and_photo_id(
+            boardgame.name,
+            boardgame.number_of_photos - 1
+        )
     else:
-        boardgame.number_of_photos = 1
+        photo = Photo(None, photo_id, None, None)
 
-    photo = db.get_photo_by_boardgame_name_and_photo_id(
-        boardgame.name,
-        boardgame.number_of_photos - 1
-    )
+    boardgame_categories = db.get_boardgame_categories()
     return render_template(
         "boardgame.html",
         boardgame=boardgame,
@@ -926,7 +930,35 @@ def add_boardgame_photo() -> str:
         error_text_photo=error_text
     )
 
+@login_required
+def add_boardgame_delete_photo() -> str:
+    boardgame_name = request.form.get("boardgame_name")
+    photo_id = request.form.get("photo_id", 0, type=int)
+    boardgame = db.get_boardgame_by_name(boardgame_name)
+    db.delete_boardgame_photo_by_boardgame_id_and_photo_id(boardgame.id, photo_id)
 
+    boardgame.number_of_photos -= 1
+    if boardgame.number_of_photos < 1:
+        boardgame.number_of_photos = 0 
+
+    show_photo_id = photo_id - 1
+    if show_photo_id <= 0:
+        photo = db.get_photo_by_boardgame_name_and_photo_id(boardgame_name, 0)
+    else:
+        photo = db.get_photo_by_boardgame_name_and_photo_id(boardgame_name, show_photo_id)
+
+    boardgame_categories = db.get_boardgame_categories()
+
+    return render_template(
+        "boardgame.html",
+        boardgame=boardgame,
+        boardgame_categories=boardgame_categories,
+        n=session.get("users_games", 1),
+        photo=photo,
+        edit_photos=True
+    )
+
+@login_required
 def add_boardgame_next_photo() -> str:
     boardgame_name = request.form.get("boardgame_name")
     photo_id = request.form.get("photo_id", 0, type=int)
@@ -952,6 +984,7 @@ def add_boardgame_next_photo() -> str:
         edit_photos=True
     )
 
+@login_required
 def add_boardgame_previous_photo() -> str:
     boardgame_name = request.form.get("boardgame_name")
     photo_id = request.form.get("photo_id", 0, type=int)

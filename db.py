@@ -1096,6 +1096,19 @@ def add_boardgame_photo_by_boardgame_name(
         WHERE b.name = ?;
     """, (photo_name, file_format, photo, boardgame_name))
 
+def delete_boardgame_photo_by_boardgame_id_and_photo_id(
+    boardgame_id: int,
+    photo_id: int,
+) -> None:
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    conn.write("DELETE FROM photos WHERE boardgame_id = ? AND id = ?;", (boardgame_id, photo_id))
+
+    conn.write("""
+        UPDATE photos
+        SET id = id - 1
+        WHERE boardgame_id = ? AND id > ?;
+    """, (boardgame_id, photo_id))
+
 def get_reviews_by_boardgame_id(
     boardgame_id: int,
     page_num: int

@@ -68,6 +68,10 @@
 
                 {% if boardgame and total_slots > 1 %}
                     <div class="boardgame-image-selector">
+                        {% if edit_photos and total_slots - 1 != photo.id %}
+                            <button name="target" value="delete photo" type="submit" aria-label="Poista kuva">🗑</button>
+                        {% endif %}
+
                         {% if photo.id > 0 %}
                             <button name="target" value="previous photo" type="submit">◀</button>
                         {% endif %}
