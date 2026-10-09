@@ -241,8 +241,13 @@ def insert_boardgame(boardgame_name: str, user_id: int) -> None:
             FROM boardgames b
             WHERE b.name = ?
         """, (user_id, boardgame_name))
+
+        id = conn.read("SELECT id FROM boardgames where name = ?;", (boardgame_name))[0][0]
+
     except sqlite3.Error as e:
         raise DatabaseError from e
+
+    return id
 
 def update_boardgame(
     boardgame: Boardgame,

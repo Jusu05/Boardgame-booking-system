@@ -742,6 +742,7 @@ def add_boardgame() -> Response | str:
 @login_required
 def add_boardgame_edit() -> str:
     boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
+    session["boardgame_id"] = boardgame.id
     photo = db.get_photo_by_boardgame_name_and_photo_id(
         boardgame.name,
         request.form.get("photo_id", 0, type=int)
@@ -766,12 +767,13 @@ def add_boardgame_create() -> str:
 
     if not error_text:
         try:
-            db.insert_boardgame(boardgame_name, current_user.id)
+            boardgame_id = db.insert_boardgame(boardgame_name, current_user.id)
         except DatabaseError:
             return add_boardgame_edit()
 
+        session["boardgame_id"] = boardgame_id
         session["new_game_added"] = boardgame_name
-        boardgame_categories = db.get_boardgame_categories()
+        boardgame_categories: list[tuple[int, str]] = db.get_boardgame_categories()
         boardgame = db.get_boardgame_by_name(boardgame_name)
 
         if boardgame.number_of_photos and boardgame.number_of_photos - 1 >= 0:
