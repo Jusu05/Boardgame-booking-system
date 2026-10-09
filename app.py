@@ -238,7 +238,14 @@ def create_user() -> Response | str:
                 error_text=error_text
             )
 
-        return redirect("/")
+        return render_template(
+            "redirect.html",
+            page_title="Loit käyttäjän onnistuneesti",
+            heading="Loit käyttäjän onnistuneesti",
+            text=f"Loit käyttäjän {username} onnistuneesti",
+            redirect_url="/"
+        )
+
 
     return render_template("login.html", login_screen=False)
 
@@ -811,14 +818,22 @@ def add_boardgame_create() -> str:
 def add_boardgame_confirm() -> Response:
     boardgame, error_text = Boardgame.from_form(request.form)
     if not error_text:
+        boardgame.id = session.pop("boardgame_id")
         if "users_games" in session:
             db.update_boardgame(boardgame,
                 current_user.id,
                 session.pop("users_games")
             )
         else:
-            db.update_boardgame(boardgame, current_user.id)
-        return redirect("/")
+            db.update_boardgame(boardgame, current_user.id, 1)
+
+        return render_template(
+            "redirect.html",
+            page_title="Lisäsit lautapelin onnistuneesti",
+            heading="Lisäsit lautapelin onnistuneesti",
+            text=f"Lisäsit lautapelin {boardgame.name} onnistuneesti",
+            redirect_url="/"
+        )
 
     session["new_game_added"] = request.form["boardgame_name"]
     boardgame_categories = db.get_boardgame_categories()
