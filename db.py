@@ -1154,7 +1154,7 @@ def get_number_of_user_ratings(user_id: int) -> int:
 def get_number_of_boardgame_reviews(boardgame_id: int) -> int:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     n = conn.read(
-        "SELECT COUNT(id) FROM ratings WHERE boardgame_id = ?",
+        "SELECT COUNT(boardgame_id) FROM ratings WHERE boardgame_id = ?",
         (boardgame_id,)
     )
     return n[0][0]
