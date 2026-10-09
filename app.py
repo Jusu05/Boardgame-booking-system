@@ -102,10 +102,10 @@ def index() -> str:
             case "better search activate":
                 boardgames = db.get_boardgame_page(page)
                 better_search = not better_search
-
             case _:
                 boardgames = db.get_boardgame_page(page)
-
+    elif request.method == "GET":
+        boardgames = db.get_boardgame_page(page)
     total = db.get_number_of_boardgames()
     page_size = int(os.getenv("PAGE_SIZE"))
     boardgame_page_info = make_page_info_tuple(page, total, page_size)
