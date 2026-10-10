@@ -110,11 +110,11 @@ class Review:
         if form["text"] and len(form["text"]) > 500:
             error_text += "\narvostelun teksti on liian pitkä"
         try:
-            float(form["rating"])
+            rating = float(form["rating"])
         except Exception:
             error_text += "\narvosteluun ei ole lisätty tähtiä"
 
-        if 0 < float(form["rating"]) < 5:
+        if not (0 < rating < 5):
             error_text += "\ntähti arvostelu on liian iso"
 
         if error_text == "Virhe arvostelua lisätessä:":
@@ -123,7 +123,7 @@ class Review:
         return Review(
             user,
             form["text"],
-            5-float(form["rating"])
+            5-rating
         ), error_text
 
     def __add__(self, other) -> float:

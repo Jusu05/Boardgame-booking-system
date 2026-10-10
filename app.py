@@ -343,13 +343,10 @@ def boardgame_page(boardgame_name: str) -> Response | str:
                 review_page_num += 1
             case "previous page review":
                 review_page_num = max(0, review_page_num - 1)
-            case _:
-                if target.startswith("review"):
-                    review_page_num = int(target.split(" ", 1)[1]) - 1
-
+    
     reviews = db.get_reviews_by_boardgame_id(boardgame.id, review_page_num)
-
     total_reviews = db.get_number_of_boardgame_reviews(boardgame.id)
+
     page_size = int(os.getenv("PAGE_SIZE"))
     review_page_info = make_page_info_tuple(
         review_page_num,
