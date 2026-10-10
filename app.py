@@ -373,7 +373,7 @@ def boardgame_page(boardgame_name: str) -> Response | str:
                     review_page_info
                 )
             case "delete":
-                return boardgame_delete(
+                return boardgame_page_delete(
                     boardgame,
                     reviews,
                     photo,
@@ -395,6 +395,18 @@ def boardgame_page(boardgame_name: str) -> Response | str:
                         boardgame.name,
                         photo.id - 1
                     )
+            case "delete photo":
+                return boardgame_page_delete_photo(
+                    boardgame,
+                    reviews,
+                    review_page_info
+                )
+            case "photo":
+                return boardgame_page_add_photo(
+                    boardgame,
+                    reviews,
+                    review_page_info
+                )
             case "minus":
                 return boardgame_page_minus(
                     boardgame,
@@ -454,6 +466,7 @@ def boardgame_page_edit(
     boardgame_categories = db.get_boardgame_categories()
     value = db.get_users_game_count_by_boardgame_id(boardgame.id)
     user_boardgames, reserved_user_boardgames = value
+    session["boardgame_id"] = boardgame.id
     return render_template(
         "boardgame.html",
         boardgame=boardgame,
@@ -466,7 +479,7 @@ def boardgame_page_edit(
     )
 
 @login_required
-def boardgame_delete(
+def boardgame_page_delete(
     boardgame: Boardgame,
     reviews: list[Review],
     photo: Photo,
@@ -507,7 +520,8 @@ def boardgame_page_update(
     review_page_info: tuple
 ) -> Response | str:
     boardgame, error_text = Boardgame.from_form(request.form)
-    if error_text:
+    if not error_text:
+        boardgame.id = session.pop("boardgame_id")
         if "users_games" in session:
             db.update_boardgame(
                 boardgame,
@@ -666,6 +680,97 @@ def get_dates():
     next_day = (datetime.today() + timedelta(days=1)).isoformat()
     next_month = (datetime.today() + timedelta(days=30)).isoformat()
     return today, next_day, next_month
+
+@login_required
+def boardgame_page_add_photo(
+    boardgame: Boardgame,
+    reviews: list[Review],
+    review_page_info: tuple
+) -> str:
+    photo = request.files["photo"]
+    photo_id = request.form.get("photo_id", 0, type=int)
+    error_text = None
+
+    if photo.mimetype not in {
+        "image/png",
+        "image/jpeg",
+        "image/tiff",
+        "image/webp"
+    }:
+        error_text = "Tiedosto tyyppiä ei tueta"
+
+    photo_bytes = photo.stream.read()
+    if not error_text and sys.getsizeof(photo_bytes, 0) > 100000:
+        error_text = "Lisättävä kuva on liian suuri"
+
+    boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
+
+    if not error_text:
+        if boardgame.number_of_photos:
+            boardgame.number_of_photos += 1
+        else:
+            boardgame.number_of_photos = 1
+
+        db.add_boardgame_photo_by_boardgame_name(
+            request.form["boardgame_name"],
+            photo.filename,
+            photo_bytes,
+            photo.mimetype
+        )
+
+        photo = db.get_photo_by_boardgame_name_and_photo_id(
+            boardgame.name,
+            boardgame.number_of_photos - 1
+        )
+    else:
+        photo = Photo(None, photo_id, None, None)
+
+    boardgame_categories = db.get_boardgame_categories()
+    value = db.get_users_game_count_by_boardgame_id(boardgame.id)
+    user_boardgames, reserved_user_boardgames = value
+    return render_template(
+        "boardgame.html",
+        boardgame=boardgame,
+        reviews=reviews,
+        boardgame_categories=boardgame_categories,
+        n=user_boardgames+reserved_user_boardgames,
+        photo=photo,
+        edit_photos=True,
+        review_page_info=review_page_info
+    )
+
+@login_required
+def boardgame_page_delete_photo(
+    boardgame: Boardgame,
+    reviews: list[Review],
+    review_page_info: tuple
+) -> str:
+    photo_id = request.form.get("photo_id", 0, type=int)
+    db.delete_boardgame_photo_by_boardgame_id_and_photo_id(boardgame.id, photo_id)
+
+    boardgame.number_of_photos -= 1
+    if boardgame.number_of_photos < 1:
+        boardgame.number_of_photos = 0
+
+    show_photo_id = photo_id - 1
+    if show_photo_id <= 0:
+        photo = db.get_photo_by_boardgame_name_and_photo_id(boardgame.name, 0)
+    else:
+        photo = db.get_photo_by_boardgame_name_and_photo_id(boardgame.name, show_photo_id)
+
+    boardgame_categories = db.get_boardgame_categories()
+    value = db.get_users_game_count_by_boardgame_id(boardgame.id)
+    user_boardgames, reserved_user_boardgames = value
+    return render_template(
+        "boardgame.html",
+        boardgame=boardgame,
+        reviews=reviews,
+        boardgame_categories=boardgame_categories,
+        n=user_boardgames+reserved_user_boardgames,
+        photo=photo,
+        edit_photos=True,
+        review_page_info=review_page_info
+    )
 
 @app.route("/boardgame/<boardgame_name>/photo/<int:photo_id>", methods=["GET"])
 def boardgame_photo(boardgame_name: str, photo_id: int) -> Response:
