@@ -377,7 +377,7 @@ def get_boardgame_page(page_num: int) -> list[Boardgame] | None:
             r[0], r[1], r[2], r[3], r[4], r[5], r[6],
             category=r[7],
             stars=r[8],
-            half_star=bool(result[9])
+            half_star=bool(r[9])
         ),
         result))
     return None
