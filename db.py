@@ -1288,6 +1288,17 @@ def set_boardgame_returned(boardgame: Boardgame, user_id: int) -> None:
             AND reserver = ?
     """, (date, boardgame.id, user_id))
 
+    conn.write("""
+        UPDATE users_boardgames
+        SET reserved_user_games = reserved_user_games - 1,
+            user_games = user_games + 1
+        WHERE boardgame_type = ?
+              AND user_id = (SELECT user_id
+                             FROM reservation
+                             WHERE boardgame_id = ?
+                                   AND reserver = ?)
+    """, (boardgame.id, boardgame.id, user_id))
+
 def get_number_of_user_reservations(user_id: int) -> int:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     date = datetime.today()
