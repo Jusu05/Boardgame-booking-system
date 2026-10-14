@@ -339,7 +339,16 @@ def get_boardgame_by_name(boardgame_name: str) -> Boardgame | None:
 
 def get_number_of_boardgames() -> int:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
-    n = conn.read("SELECT COUNT(id) FROM boardgames")
+    n = conn.read("""
+        SELECT COUNT(*) FROM (
+            SELECT b.id
+            FROM boardgames b
+            LEFT JOIN users_boardgames ub ON ub.boardgame_type = b.id
+            GROUP BY b.id
+            HAVING COALESCE(SUM(ub.user_games), 0)
+                + COALESCE(SUM(ub.reserved_user_games), 0) > 0
+        )
+    """)
     return n[0][0]
 
 def get_boardgame_page(page_num: int) -> list[Boardgame] | None:
@@ -497,6 +506,39 @@ def search_boardgames(
         )
 
     return None
+
+def count_search_boardgames(
+    search_word: str,
+    longer_duration: int,
+    shorter_duration: int,
+    category_id: int | None,
+    more_players: int,
+    less_players: int
+) -> int:
+    conn = SqlConnection(os.getenv("DATABASE_NAME"))
+    n = conn.read("""
+        SELECT COUNT(*) FROM (
+            SELECT b.id
+            FROM boardgames b
+            LEFT JOIN users_boardgames ub ON ub.boardgame_type = b.id
+            WHERE b.name LIKE ?
+                AND b.number_of_players BETWEEN ? AND ?
+                AND b.duration BETWEEN ? AND ?
+                AND (b.category_id = ? OR ? IS NULL)
+            GROUP BY b.id
+            HAVING COALESCE(SUM(ub.user_games), 0)
+                + COALESCE(SUM(ub.reserved_user_games), 0) > 0
+        )
+    """, (
+        f"%{search_word}%",
+        more_players,
+        less_players,
+        longer_duration,
+        shorter_duration,
+        category_id,
+        category_id
+    ))
+    return n[0][0]
 
 def get_boardgame_categories() -> list[tuple[int, str]]:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))

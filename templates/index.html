@@ -8,7 +8,7 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <input type="hidden" name="selected boardgames" value="{{ boardgame_page_info[0] if boardgame_page_info else 0 }}">
         <input type="hidden" name="better search bool" value="{{ better_search if better_search else False }}">
-        <input type="text" name="search_word">
+        <input type="text" name="search_word" value="{{ request.form.get('search_word', '') }}">
         <button name="target" value="better search activate" type="submit">▼</button>
         {% if not better_search%}
                 <button name="target" value="search" type="submit">Hae</button>
@@ -17,23 +17,23 @@
                 <h4>Tarkennettu haku</h4>
                 <div style="display: flex; gap: 3px;">
                     <p>Pelin kesto:</p>
-                    <input type="number" name="duration longer">
+                    <input type="number" name="duration longer" value="{{ request.form.get('duration longer', '') }}">
                     <p>-</p>
-                    <input type="number" name="duration shorter">
+                    <input type="number" name="duration shorter" value="{{ request.form.get('duration shorter', '') }}">
                 </div>
                 <div style="display: flex; gap: 3px;">
                     <p>Pelaaja määrä:</p>
-                    <input type="number" name="more players">
+                    <input type="number" name="more players" value="{{ request.form.get('more players', '') }}">
                     <p>-</p>
-                    <input type="number" name="less players">
+                    <input type="number" name="less players" value="{{ request.form.get('less players', '') }}">
                 </div>
                 <div style="display: flex; gap: 3px;">
                     <div class="selector-wrapper">
                         <select name="category_id" id="category_id">
-                            <option value=-1>Hae pelin luokan mukaan</option>
+                            <option value="">Hae pelin luokan mukaan</option>
                             {% if boardgame_categories%}
                                 {% for boardgame_category in boardgame_categories %}
-                                    <option value={{ boardgame_category[0] }}>{{ boardgame_category[1] }}</option>
+                                    <option value={{ boardgame_category[0] }} {% if request.form.get('category_id') == boardgame_category[0]|string %}selected{% endif %}>{{ boardgame_category[1] }}</option>
                                 {% endfor %}
                             {% endif %}
                         </select>
@@ -51,6 +51,14 @@
 <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <input type="hidden" name="selected boardgames" value="{{ boardgame_page_info[0] if boardgame_page_info else 0 }}">
+    <input type="hidden" name="mode" value="{{ mode }}">
+    <input type="hidden" name="better search bool" value="{{ better_search if better_search else False }}">
+    <input type="hidden" name="search_word" value="{{ request.form.get('search_word', '') }}">
+    <input type="hidden" name="duration longer" value="{{ request.form.get('duration longer', '') }}">
+    <input type="hidden" name="duration shorter" value="{{ request.form.get('duration shorter', '') }}">
+    <input type="hidden" name="more players" value="{{ request.form.get('more players', '') }}">
+    <input type="hidden" name="less players" value="{{ request.form.get('less players', '') }}">
+    <input type="hidden" name="category_id" value="{{ request.form.get('category_id', '') }}">
 
     <div>
         {% if boardgames %}

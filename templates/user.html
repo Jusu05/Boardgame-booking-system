@@ -6,7 +6,7 @@
 <form method="POST">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <input type="hidden" name="selected boardgames" value="{{ boardgames_page[0] if boardgames_page else 0 }}">
-    <input type="hidden" name="selected ratings" value="{{ ratings_page[0] if ratings_page else 0 }}">
+    <input type="hidden" name="selected reservation" value="{{ reservation_page_info[0] if reservation_page_info else 0 }}">
 
     <div class="user-page">
         <div class="user">
@@ -50,7 +50,7 @@
                     </div>
                 {% endfor %}
                 {% if reservation_page_info %}
-                    {{ page_selector_input(reservation_page_info[0], reservations_page_info[1], reservations_page_info[2], "ratings") }}
+                    {{ page_selector_input(reservation_page_info[0], reservation_page_info[1], reservation_page_info[2], "reservation") }}
                 {% endif %}
             </div>
         {% else %}

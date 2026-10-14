@@ -42,22 +42,32 @@ def index() -> str:
     better_search = convert_text_to_bool(better_search)
     error_text = None
     boardgames = None
+    target = ""
+    total = db.get_number_of_boardgames()
 
     if request.method == "POST":
         target = request.form.get("target", "")
         match target:
             case "next page boardgames":
                 page += 1
+                target = request.form.get("mode", "")
             case "previous page boardgames":
                 page = max(0, page - 1)
-            case _ as target:
-                if target and target.startswith("boardgames"):
+                target = request.form.get("mode", "")
+            case "search" | "better search":
+                page = 0
+            case _:
+                if target.startswith("boardgames"):
                     page = int(target.split(" ", 1)[1]) - 1
+                    target = request.form.get("mode", "")
 
         match target:
             case "search":
                 search_word = request.form.get("search_word", "")
                 if len(search_word) < 100:
+                    total = db.count_search_boardgames(
+                        search_word, 0, 10 * 60, None, 0, 100
+                    )
                     boardgames = db.search_boardgames(
                         search_word,
                         0,
@@ -89,6 +99,14 @@ def index() -> str:
                     search_word = request.form.get("search_word")
 
                     if len(error_text) == 0:
+                        total = db.count_search_boardgames(
+                            search_word,
+                            duration_longer,
+                            duration_shorter,
+                            category_id,
+                            more_players,
+                            less_players
+                        )
                         boardgames = db.search_boardgames(
                             search_word,
                             duration_longer,
@@ -108,7 +126,6 @@ def index() -> str:
                 boardgames = db.get_boardgame_page(page)
     elif request.method == "GET":
         boardgames = db.get_boardgame_page(page)
-    total = db.get_number_of_boardgames()
     page_size = int(os.getenv("PAGE_SIZE"))
     boardgame_page_info = make_page_info_tuple(page, total, page_size)
 
@@ -120,7 +137,8 @@ def index() -> str:
         boardgame_page_info=boardgame_page_info,
         better_search=better_search,
         boardgame_categories=boardgame_categories,
-        error_text=error_text
+        error_text=error_text,
+        mode=target if target in ("search", "better search") else ""
     )
 
 def convert_text_to_bool(text: str | None) -> bool:
@@ -300,10 +318,10 @@ def user_page() -> str:
     )
     reservations = db.get_boardgame_names_with_user_has_active_reservation(
         current_user.id,
-        reservation_page_info[2]
+        reservation_page_info[0]
     )
 
-    total_boardgames = db.get_number_of_boardgames()
+    total_boardgames = db.get_number_of_user_boardgames(current_user.id)
     boardgames_page = make_page_info_tuple(
         boardgame_page_num,
         total_boardgames,
@@ -339,6 +357,9 @@ def boardgame_page(boardgame_name: str) -> Response | str:
                 review_page_num += 1
             case "previous page review":
                 review_page_num = max(0, review_page_num - 1)
+            case _:
+                if target.startswith("review "):
+                    review_page_num = int(target.split(" ", 1)[1]) - 1
     
     reviews = db.get_reviews_by_boardgame_id(boardgame.id, review_page_num)
     total_reviews = db.get_number_of_boardgame_reviews(boardgame.id)
@@ -809,6 +830,7 @@ def boardgame_photo(boardgame_name: str, photo_id: int) -> Response:
 @login_required
 def add_boardgame() -> Response | str:
     boardgames = None
+    total = 0
     page = request.form.get("selected boardgames", 0, int)
 
     if request.method == "POST":
@@ -816,8 +838,18 @@ def add_boardgame() -> Response | str:
         match target:
             case "next page boardgames":
                 page += 1
+                target = "search"
             case "previous page boardgames":
                 page = max(0, page - 1)
+                target = "search"
+            case "search":
+                page = 0
+            case _:
+                if target.startswith("boardgames"):
+                    page = int(target.split(" ", 1)[1]) - 1
+                    target = "search"
+
+        match target:
             case "edit":
                 return add_boardgame_edit()
             case "create":
@@ -833,6 +865,9 @@ def add_boardgame() -> Response | str:
             case "search":
                 search_word = request.form.get("search_word", "")
                 if len(search_word) < 100:
+                    total = db.count_search_boardgames(
+                        search_word, 0, 10 * 60, None, 0, 100
+                    )
                     boardgames = db.search_boardgames(
                         search_word,
                         0,
@@ -855,7 +890,6 @@ def add_boardgame() -> Response | str:
 
     search_word = request.form.get("search_word")
 
-    total = db.get_number_of_boardgames()
     page_size = int(os.getenv("PAGE_SIZE"))
     boardgame_page_info = make_page_info_tuple(page, total, page_size)
 
@@ -920,11 +954,13 @@ def add_boardgame_create() -> str:
     boardgames = None
     search_word = request.form.get("search_word")
     page = request.form.get("target", 1, type=int) - 1
-    total = db.get_number_of_boardgames()
+    total = 0
     page_size = int(os.getenv("PAGE_SIZE"))
-    boardgame_page_info = make_page_info_tuple(page, total, page_size)
 
     if search_word and len(search_word) < 100:
+        total = db.count_search_boardgames(
+            search_word, 0, 10 * 60, None, 0, 100
+        )
         boardgames = db.search_boardgames(
             search_word,
             0,
@@ -934,6 +970,7 @@ def add_boardgame_create() -> str:
             100,
             page
         )
+    boardgame_page_info = make_page_info_tuple(page, total, page_size)
 
     return render_template(
         "add_boardgame.html",
