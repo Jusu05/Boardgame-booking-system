@@ -209,7 +209,7 @@ def delete_users_boardgames_by_boardgame_id(
 ) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     conn.write(
-        "DELETE FROM users_boardgames WHERE boardgame_id = ?;",
+        "DELETE FROM users_boardgames WHERE boardgame_type = ?;",
         (boardgame_id,)
     )
 
