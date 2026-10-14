@@ -644,8 +644,33 @@ def boardgame_page_reserve(
     users_boardgames = db.get_user_boardgame_ids(current_user.id)
     users_has_boardgames = boardgame.id in users_boardgames
     today, next_day, next_month = get_dates()
-    start = datetime.fromisoformat(request.form["booking-start"])
-    end = datetime.fromisoformat(request.form["booking-end"])
+
+    booking_error_text = None
+    start_str = request.form.get("booking-start")
+    end_str =  request.form.get("booking-end")
+
+    if start_str and end_str:
+        try:
+            start = datetime.fromisoformat(start_str)
+            end = datetime.fromisoformat(end_str)
+        except:
+            booking_error_text = "Ei annettu päivämäärä"    
+    else:
+        booking_error_text = "Toinen kentissä on tyhjä"    
+
+    if not booking_error_text:
+        return render_template(
+            "boardgame.html",
+            boardgame=boardgame,
+            reviews=reviews,
+            users_has_boardgames=users_has_boardgames,
+            photo=photo,
+            today=today,
+            next_day=next_day,
+            next_month=next_month,
+            review_page_info=review_page_info,
+            booking_error_text=booking_error_text 
+        )
 
     if db.can_be_reserved(boardgame.id, start, end):
         db.insert_reservation(current_user.id, boardgame.id, start, end)

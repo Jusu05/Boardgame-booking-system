@@ -215,7 +215,7 @@ def delete_users_boardgames_by_boardgame_id(
 
 def get_user_boardgame_ids(
     user_id: int
-) -> set[int] | None:
+) -> set[int]:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read(
         "SELECT boardgame_type FROM users_boardgames WHERE user_id = ?;",
@@ -224,7 +224,7 @@ def get_user_boardgame_ids(
 
     if len(result) > 0:
         return {value[0] for value in result}
-    return None
+    return set()
 
 def insert_boardgame(boardgame_name: str, user_id: int) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))

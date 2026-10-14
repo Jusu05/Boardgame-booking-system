@@ -148,6 +148,9 @@
                     {% if cannot_reserve %}
                         <p>Et voi varatta peliä kyseisinä ajan kohtana</p>
                     {% endif %}
+                    {% if booking_error_text %}
+                        <p>{{ booking_error_text }}</p>
+                    {% endif %}
                     <button name="target" value="reserve" type="submit">Varaa</button>
                 </div>
             {% endif %}
