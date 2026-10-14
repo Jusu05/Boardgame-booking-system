@@ -382,14 +382,18 @@ def boardgame_page(boardgame_name: str) -> Response | str:
             case "confirm delete":
                 return boardgame_page_delete_confirm(boardgame_name)
             case "next photo":
-                boardgame.update(request.form)
+                can_update_form = request.form.get("number_of_players")
+                if can_update_form:
+                    boardgame.update(request.form)
                 if photo.id + 1 < boardgame.number_of_photos:
                     photo = db.get_photo_by_boardgame_name_and_photo_id(
                         boardgame.name,
                         photo.id + 1
                     )
             case "previous photo":
-                boardgame.update(request.form)
+                can_update_form = request.form.get("number_of_players")
+                if can_update_form:
+                    boardgame.update(request.form)
                 if photo.id - 1 >= 0:
                     photo = db.get_photo_by_boardgame_name_and_photo_id(
                         boardgame.name,
