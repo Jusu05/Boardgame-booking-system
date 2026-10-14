@@ -69,7 +69,10 @@ def index() -> str:
                     )
                 else:
                     boardgames = None
-            case "better search bool":
+            case "better search activate":
+                boardgames = db.get_boardgame_page(page)
+                better_search = not better_search        
+            case "better search":
                 try:
                     error_text = ""
                     value = index_validate_time_search()
@@ -83,7 +86,9 @@ def index() -> str:
                     category_id = index_validate_category_id()
                     error_text = error_text.strip()
 
-                    if len(error_text) < 0:
+                    search_word = request.form.get("search_word")
+
+                    if len(error_text) == 0:
                         boardgames = db.search_boardgames(
                             search_word,
                             duration_longer,
@@ -99,9 +104,6 @@ def index() -> str:
 
                 except ValueError:
                     boardgames = None
-            case "better search activate":
-                boardgames = db.get_boardgame_page(page)
-                better_search = not better_search
             case _:
                 boardgames = db.get_boardgame_page(page)
     elif request.method == "GET":
@@ -130,9 +132,6 @@ def index_validate_time_search() -> tuple[int, int, str]:
 
     error_text = ""
     if duration_longer > duration_shorter:
-        error_text = "Lyhin aika on pidempi kuin pisin aika"
-
-    if duration_longer < duration_shorter:
         error_text = "Pisin aika on lyhyempi kuin lyhin aika"
 
     return duration_longer, duration_shorter, error_text
@@ -145,10 +144,7 @@ def index_validate_player_search() -> tuple[int, int, str]:
 
     error_text = ""
     if more_players > less_players:
-        error_text = "Pelaajien pienin määrä on suurempi kuin pienin määrä"
-
-    if more_players < less_players:
-        error_text = "Pelaajien suurin määrä on pienempi kuin pienin määrä"
+        error_text = "Pelaajien pienin määrä on suurempi kuin suurin määrä"
 
     return more_players, less_players, error_text
 
