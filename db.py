@@ -206,12 +206,13 @@ def set_negative_user_boardgames_to_zero(user_id: int) -> None:
     """, (user_id,))
 
 def delete_users_boardgames_by_boardgame_id(
+    user_id: int,
     boardgame_id: int
 ) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     conn.write(
-        "DELETE FROM users_boardgames WHERE boardgame_id = ?;",
-        (boardgame_id,)
+        "DELETE FROM users_boardgames WHERE boardgame_id = ? AND user_id ?;",
+        (boardgame_id, user_id)
     )
 
 def get_user_boardgame_ids(
