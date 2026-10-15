@@ -183,14 +183,16 @@ def get_avatar_by_username(username: str) -> Photo:
     return Photo(f"{username} avatar", None, "image/png", b)
 
 def get_users_game_count_by_boardgame_id(
-        boardgame_id: int
+        boardgame_id: int,
+        user_id: int,
     ) -> list[int] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read("""
         SELECT user_games, reserved_user_games
         FROM users_boardgames
-        WHERE boardgame_id = ?;
-    """, (boardgame_id,))
+        WHERE boardgame_id = ?
+              AND user_id = ?;
+    """, (boardgame_id, user_id))
 
     if len(result) > 0:
         return result[0]

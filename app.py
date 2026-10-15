@@ -485,7 +485,7 @@ def boardgame_page_edit(
     review_page_info: tuple
 ) -> str:
     boardgame_categories = db.get_boardgame_categories()
-    value = db.get_users_game_count_by_boardgame_id(boardgame.id)
+    value = db.get_users_game_count_by_boardgame_id(boardgame.id, current_user.id)
     user_boardgames, reserved_user_boardgames = value
     session["boardgame_id"] = boardgame.id
     return render_template(
@@ -506,7 +506,7 @@ def boardgame_page_delete(
     photo: Photo,
     review_page_info: tuple
 ) -> str:
-    count = db.get_users_game_count_by_boardgame_id(boardgame.id)
+    count = db.get_users_game_count_by_boardgame_id(boardgame.id, current_user.id)
     user_boardgames, reserved_user_boardgames = count
     return render_template(
         "boardgame.html",
@@ -522,7 +522,7 @@ def boardgame_page_delete(
 @login_required
 def boardgame_page_delete_confirm(boardgame_name: str) -> Response:
     boardgame = db.get_boardgame_by_name(boardgame_name)
-    values = db.get_users_game_count_by_boardgame_id(boardgame.id)
+    values = db.get_users_game_count_by_boardgame_id(boardgame.id, current_user.id)
     user_boardgames, reserved_user_boardgames = values
 
     if reserved_user_boardgames > 0:
@@ -561,7 +561,7 @@ def boardgame_page_update(
         request.form.get("photo_id", 0, int)
     )
     boardgame_categories = db.get_boardgame_categories()
-    value = db.get_users_game_count_by_boardgame_id(boardgame.id)
+    value = db.get_users_game_count_by_boardgame_id(boardgame.id, current_user.id)
     user_boardgames, reserved_user_boardgames = value
     return render_template(
         "boardgame.html",
@@ -617,7 +617,7 @@ def boardgame_page_plus(
 ) -> str:
     boardgame_categories = db.get_boardgame_categories()
     boardgame.update(request.form)
-    user_games, _ = db.get_users_game_count_by_boardgame_id(boardgame.id)
+    user_games, _ = db.get_users_game_count_by_boardgame_id(boardgame.id, current_user.id)
     session["users_games"] = session.get("users_games", user_games) + 1
     return render_template(
         "boardgame.html",
@@ -772,7 +772,7 @@ def boardgame_page_add_photo(
         photo = Photo(None, photo_id, None, None)
 
     boardgame_categories = db.get_boardgame_categories()
-    value = db.get_users_game_count_by_boardgame_id(boardgame.id)
+    value = db.get_users_game_count_by_boardgame_id(boardgame.id, current_user.id)
     user_boardgames, reserved_user_boardgames = value
     return render_template(
         "boardgame.html",
@@ -805,7 +805,7 @@ def boardgame_page_delete_photo(
         photo = db.get_photo_by_boardgame_name_and_photo_id(boardgame.name, show_photo_id)
 
     boardgame_categories = db.get_boardgame_categories()
-    value = db.get_users_game_count_by_boardgame_id(boardgame.id)
+    value = db.get_users_game_count_by_boardgame_id(boardgame.id, current_user.id)
     user_boardgames, reserved_user_boardgames = value
     return render_template(
         "boardgame.html",
