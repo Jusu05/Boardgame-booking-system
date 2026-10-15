@@ -196,12 +196,13 @@ def get_users_game_count_by_boardgame_id(
         return result[0]
     return (1, 0)
 
-def set_user_boardgames_to_zero(user_id: int) -> None:
+def set_negative_user_boardgames_to_zero(user_id: int) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     conn.write("""
         UPDATE users_boardgames
         SET user_games = 0
-        WHERE user_id = ?;
+        WHERE user_id = ?
+              AND user_games < 0;
     """, (user_id,))
 
 def delete_users_boardgames_by_boardgame_id(

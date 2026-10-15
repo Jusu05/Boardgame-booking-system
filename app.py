@@ -526,7 +526,7 @@ def boardgame_page_delete_confirm(boardgame_name: str) -> Response:
     user_boardgames, reserved_user_boardgames = values
 
     if reserved_user_boardgames > 0:
-        db.set_user_boardgames_to_zero(current_user.id)
+        db.set_negative_user_boardgames_to_zero(current_user.id)
         return redirect(f"/boardgame/{boardgame.name}")
     db.delete_users_boardgames_by_boardgame_id(boardgame.id)
     if boardgame.free + boardgame.reserved - \
