@@ -189,7 +189,7 @@ def get_users_game_count_by_boardgame_id(
     result = conn.read("""
         SELECT user_games, reserved_user_games
         FROM users_boardgames
-        WHERE boardgame_type = ?;
+        WHERE boardgame_id = ?;
     """, (boardgame_id,))
 
     if len(result) > 0:
@@ -209,7 +209,7 @@ def delete_users_boardgames_by_boardgame_id(
 ) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     conn.write(
-        "DELETE FROM users_boardgames WHERE boardgame_type = ?;",
+        "DELETE FROM users_boardgames WHERE boardgame_id = ?;",
         (boardgame_id,)
     )
 
@@ -218,7 +218,7 @@ def get_user_boardgame_ids(
 ) -> set[int]:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read(
-        "SELECT boardgame_type FROM users_boardgames WHERE user_id = ?;",
+        "SELECT boardgame_id FROM users_boardgames WHERE user_id = ?;",
         (user_id,)
     )
 
@@ -236,7 +236,7 @@ def insert_boardgame(boardgame_name: str, user_id: int) -> None:
              (boardgame_name,)
         )
         conn.write("""
-            INSERT INTO users_boardgames (user_id, boardgame_type, user_games)
+            INSERT INTO users_boardgames (user_id, boardgame_id, user_games)
             SELECT ?, b.id, 0
             FROM boardgames b
             WHERE b.name = ?
@@ -283,7 +283,7 @@ def update_boardgame(
         conn.write("""
             UPDATE users_boardgames
             SET user_games = ?
-            WHERE user_id = ? AND boardgame_type = ?
+            WHERE user_id = ? AND boardgame_id = ?
         """, (users_games, user_id, boardgame.id))
 
 def delete_boardgame(boardgame: Boardgame, user_id: int) -> None:
@@ -315,7 +315,7 @@ def get_boardgame_by_name(boardgame_name: str) -> Boardgame | None:
         FROM boardgames b
         LEFT JOIN categories c ON b.category_id = c.id
         LEFT JOIN ratings r ON r.boardgame_id = b.id
-        LEFT JOIN users_boardgames ub ON ub.boardgame_type = b.id
+        LEFT JOIN users_boardgames ub ON ub.boardgame_id = b.id
         LEFT JOIN photos p ON p.boardgame_id = b.id
         WHERE b.name = ?
         GROUP BY b.id;
@@ -343,7 +343,7 @@ def get_number_of_boardgames() -> int:
         SELECT COUNT(*) FROM (
             SELECT b.id
             FROM boardgames b
-            LEFT JOIN users_boardgames ub ON ub.boardgame_type = b.id
+            LEFT JOIN users_boardgames ub ON ub.boardgame_id = b.id
             GROUP BY b.id
             HAVING COALESCE(SUM(ub.user_games), 0)
                 + COALESCE(SUM(ub.reserved_user_games), 0) > 0
@@ -371,7 +371,7 @@ def get_boardgame_page(page_num: int) -> list[Boardgame] | None:
         FROM boardgames b
         LEFT JOIN categories c ON b.category_id = c.id
         LEFT JOIN ratings r ON r.boardgame_id = b.id
-        LEFT JOIN users_boardgames ub ON ub.boardgame_type = b.id
+        LEFT JOIN users_boardgames ub ON ub.boardgame_id = b.id
         GROUP BY b.id
         HAVING COALESCE(
             SUM(ub.user_games), 0) + COALESCE(SUM(ub.reserved_user_games),
@@ -411,7 +411,7 @@ def get_user_boardgames(user_id: int, page_num: int) -> list[Boardgame] | None:
         FROM boardgames b
         LEFT JOIN categories c ON b.category_id = c.id
         LEFT JOIN ratings r ON r.boardgame_id = b.id
-        LEFT JOIN users_boardgames ub ON ub.boardgame_type = b.id
+        LEFT JOIN users_boardgames ub ON ub.boardgame_id = b.id
         WHERE ub.user_id = ?
         GROUP BY b.id
         LIMIT ?
@@ -470,7 +470,7 @@ def search_boardgames(
         FROM boardgames b
         LEFT JOIN categories c ON b.category_id = c.id
         LEFT JOIN ratings r ON r.boardgame_id = b.id
-        LEFT JOIN users_boardgames ub ON ub.boardgame_type = b.id
+        LEFT JOIN users_boardgames ub ON ub.boardgame_id = b.id
         WHERE b.name LIKE ?
             AND b.number_of_players BETWEEN ? AND ?
             AND b.duration BETWEEN ? AND ?
@@ -520,7 +520,7 @@ def count_search_boardgames(
         SELECT COUNT(*) FROM (
             SELECT b.id
             FROM boardgames b
-            LEFT JOIN users_boardgames ub ON ub.boardgame_type = b.id
+            LEFT JOIN users_boardgames ub ON ub.boardgame_id = b.id
             WHERE b.name LIKE ?
                 AND b.number_of_players BETWEEN ? AND ?
                 AND b.duration BETWEEN ? AND ?
@@ -1243,7 +1243,7 @@ def insert_reservation(
         SELECT user_games, reserved_user_games, user_id
         FROM users_boardgames
         WHERE user_games - reserved_user_games > 0
-          AND boardgame_type = ?
+          AND boardgame_id = ?
         ORDER BY user_id ASC
         LIMIT 1;
     """, (boardgame_id,))
@@ -1334,7 +1334,7 @@ def set_boardgame_returned(boardgame: Boardgame, user_id: int) -> None:
         UPDATE users_boardgames
         SET reserved_user_games = reserved_user_games - 1,
             user_games = user_games + 1
-        WHERE boardgame_type = ?
+        WHERE boardgame_id = ?
               AND user_id = (SELECT user_id
                              FROM reservation
                              WHERE boardgame_id = ?

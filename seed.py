@@ -149,7 +149,7 @@ def seed_user_boardgames(conn, n, user_ids, boardgame_ids):
 
         conn.execute("""
             INSERT INTO users_boardgames
-                (user_id, boardgame_type, user_games, reserved_user_games)
+                (user_id, boardgame_id, user_games, reserved_user_games)
             VALUES (?, ?, ?, ?)
         """, (
             user_id,

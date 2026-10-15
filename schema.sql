@@ -7,10 +7,10 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS users_boardgames (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
-    boardgame_type INTEGER,
+    boardgame_id INTEGER,
     user_games INTEGER DEFAULT 1,
     reserved_user_games INTEGER DEFAULT 0,
-    FOREIGN KEY (boardgame_type) REFERENCES boardgames(id),
+    FOREIGN KEY (boardgame_id) REFERENCES boardgames(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS reservation (
 
 CREATE INDEX IF NOT EXISTS idx_boardgames_name ON boardgames(name);
 CREATE INDEX IF NOT EXISTS idx_users_boardgames_user_id ON users_boardgames(user_id);
-CREATE INDEX IF NOT EXISTS idx_users_boardgames_boardgame_type ON users_boardgames(boardgame_type);
+CREATE INDEX IF NOT EXISTS idx_users_boardgames_boardgame_id ON users_boardgames(boardgame_id);
 CREATE INDEX IF NOT EXISTS idx_reservation_reserver ON reservation(reserver);
 CREATE INDEX IF NOT EXISTS idx_reservation_boardgame_id ON reservation(boardgame_id);
 CREATE INDEX IF NOT EXISTS idx_reservation_boardgame_reserver ON reservation(boardgame_id, reserver);
