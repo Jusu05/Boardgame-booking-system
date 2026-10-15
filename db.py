@@ -1206,9 +1206,9 @@ def get_user_review_stats(user_id: int) -> tuple[int, int, bool] | None:
     result = conn.read("""
         SELECT
             COUNT(*),
-            CAST(SUM(r.rating) AS INTEGER) AS stars,
+            CAST(AVG(r.rating) AS INTEGER) AS stars,
             IIF(
-                SUM(r.rating) - FLOOR(SUM(r.rating))
+                AVG(r.rating) - FLOOR(AVG(r.rating))
                 BETWEEN 0.25 AND 0.75, 1, 0
             ) AS half_star
         FROM ratings r
