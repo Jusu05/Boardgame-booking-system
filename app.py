@@ -28,6 +28,16 @@ login_manager.login_view = "login"
 def load_user(user_id: int) -> User | None:
     return db.get_user_by_id(user_id)
 
+@app.before_request
+def create_user_session() -> None:
+    if current_user.is_authenticated:
+        session.setdefault(str(current_user.id), {})
+
+@app.after_request
+def save_user_session(response: Response) -> Response:
+    session.modified = True
+    return response
+
 @app.context_processor
 def inject_flags() -> dict:
     flags = {}
@@ -273,6 +283,7 @@ def user_photo(username: str) -> Response:
 @app.route("/logout")
 @login_required
 def logout() -> Response:
+    session.pop(str(current_user.id), None)
     logout_user()
     return redirect("/")
 
@@ -490,7 +501,7 @@ def boardgame_page_edit(
     boardgame_categories = db.get_boardgame_categories()
     value = db.get_users_game_count_by_boardgame_id(boardgame.id, current_user.id)
     user_boardgames, reserved_user_boardgames = value
-    session["boardgame_id"] = boardgame.id
+    session[str(current_user.id)]["boardgame_id"] = boardgame.id
     return render_template(
         "boardgame.html",
         boardgame=boardgame,
@@ -545,14 +556,15 @@ def boardgame_page_update(
 ) -> Response | str:
     boardgame, error_text = Boardgame.from_form(request.form)
     if not error_text:
-        boardgame.id = session.pop("boardgame_id")
-        if "users_games" in session:
+        boardgame.id = session[str(current_user.id)].pop("boardgame_id")
+        game_session = session[str(current_user.id)].setdefault(str(boardgame.id), {})
+        if "users_games" in game_session:
             db.update_boardgame(
                 boardgame,
                 current_user.id,
-                session["users_games"]
+                game_session["users_games"]
             )
-            del session["users_games"]
+            del game_session["users_games"]
         else:
             db.update_boardgame(boardgame, current_user.id)
         return redirect(f"/boardgame/{boardgame.name}")
@@ -564,7 +576,7 @@ def boardgame_page_update(
         request.form.get("photo_id", 0, int)
     )
     boardgame_categories = db.get_boardgame_categories()
-    value = db.get_users_game_count_by_boardgame_id(boardgame.id, current_user.id)
+    value = db.get_users_game_count_by_boardgame_id(boardgame.id)
     user_boardgames, reserved_user_boardgames = value
     return render_template(
         "boardgame.html",
@@ -621,13 +633,14 @@ def boardgame_page_plus(
     boardgame_categories = db.get_boardgame_categories()
     boardgame.update(request.form)
     user_games, _ = db.get_users_game_count_by_boardgame_id(boardgame.id, current_user.id)
-    session["users_games"] = session.get("users_games", user_games) + 1
+    game_session = session[str(current_user.id)].setdefault(str(boardgame.id), {})
+    game_session["users_games"] = game_session.get("users_games", user_games) + 1
     return render_template(
         "boardgame.html",
         boardgame=boardgame,
         reviews=reviews,
         boardgame_categories=boardgame_categories,
-        n=session["users_games"],
+        n=game_session["users_games"],
         photo=photo,
         edit_photos=True,
         review_page_info=review_page_info
@@ -642,17 +655,18 @@ def boardgame_page_minus(boardgame: Boardgame,
         boardgame.id
     )
     boardgame.update(request.form)
-    current = session.get("users_games", user_games)
+    game_session = session[str(current_user.id)].setdefault(str(boardgame.id), {})
+    current = game_session.get("users_games", user_games)
     if current - 1 > reserved:
-        session["users_games"] = current - 1
+        game_session["users_games"] = current - 1
     else:
-        session["users_games"] = current
+        game_session["users_games"] = current
     return render_template(
         "boardgame.html",
         boardgame=boardgame,
         reviews=reviews,
         boardgame_categories=boardgame_categories,
-        n=session["users_games"],
+        n=game_session["users_games"],
         photo=photo,
         edit_photos=True,
         review_page_info=review_page_info
@@ -907,13 +921,13 @@ def add_boardgame() -> Response | str:
 @login_required
 def add_boardgame_edit() -> str:
     boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
-    session["boardgame_id"] = boardgame.id
+    session[str(current_user.id)]["boardgame_id"] = boardgame.id
     photo = db.get_photo_by_boardgame_name_and_photo_id(
         boardgame.name,
         request.form.get("photo_id", 0, type=int)
     )
     boardgame_categories = db.get_boardgame_categories()
-    n = session.get("users_games", 1)
+    n = session[str(current_user.id)].setdefault(str(boardgame.id), {}).get("users_games", 1)
     return render_template(
         "boardgame.html",
         boardgame=boardgame,
@@ -936,8 +950,8 @@ def add_boardgame_create() -> str:
         except DatabaseError:
             return add_boardgame_edit()
 
-        session["boardgame_id"] = boardgame_id
-        session["new_game_added"] = boardgame_name
+        session[str(current_user.id)]["boardgame_id"] = boardgame_id
+        session[str(current_user.id)]["new_game_added"] = boardgame_name
         boardgame_categories: list[tuple[int, str]] = db.get_boardgame_categories()
         boardgame = db.get_boardgame_by_name(boardgame_name)
 
@@ -988,11 +1002,12 @@ def add_boardgame_create() -> str:
 def add_boardgame_confirm() -> Response:
     boardgame, error_text = Boardgame.from_form(request.form)
     if not error_text:
-        boardgame.id = session.pop("boardgame_id")
-        if "users_games" in session:
+        boardgame.id = session[str(current_user.id)].pop("boardgame_id")
+        game_session = session[str(current_user.id)].pop(str(boardgame.id), {})
+        if "users_games" in game_session:
             db.update_boardgame(boardgame,
                 current_user.id,
-                session.pop("users_games")
+                game_session["users_games"]
             )
         else:
             db.update_boardgame(boardgame, current_user.id, 1)
@@ -1005,7 +1020,7 @@ def add_boardgame_confirm() -> Response:
             redirect_url="/"
         )
 
-    session["new_game_added"] = request.form["boardgame_name"]
+    session[str(current_user.id)]["new_game_added"] = request.form["boardgame_name"]
     boardgame_categories = db.get_boardgame_categories()
     boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
     photo = Photo(None, 0, None, None)
@@ -1021,9 +1036,9 @@ def add_boardgame_confirm() -> Response:
 
 @login_required
 def add_boardgame_cancel() -> Response:
-    if "new_game_added" in session:
-        boardgame = db.get_boardgame_by_name(session["new_game_added"])
-        del session["new_game_added"]
+    if "new_game_added" in session[str(current_user.id)]:
+        boardgame = db.get_boardgame_by_name(session[str(current_user.id)]["new_game_added"])
+        del session[str(current_user.id)]["new_game_added"]
         db.delete_boardgame(boardgame, current_user.id)
     return redirect("/")
 
@@ -1032,7 +1047,8 @@ def add_boardgame_plus() -> str:
     boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
     boardgame.update(request.form)
     boardgame_categories = db.get_boardgame_categories()
-    session["users_games"] = session.get("users_games", 1) + 1
+    game_session = session[str(current_user.id)].setdefault(str(boardgame.id), {})
+    game_session["users_games"] = game_session.get("users_games", 1) + 1
     photo = db.get_photo_by_boardgame_name_and_photo_id(
         boardgame.name,
         boardgame.number_of_photos - 1
@@ -1041,7 +1057,7 @@ def add_boardgame_plus() -> str:
         "boardgame.html",
         boardgame=boardgame,
         boardgame_categories=boardgame_categories,
-        n=session["users_games"],
+        n=game_session["users_games"],
         photo=photo,
         edit_photos=True
     )
@@ -1050,7 +1066,8 @@ def add_boardgame_plus() -> str:
 def add_boardgame_minus() -> str:
     boardgame = db.get_boardgame_by_name(request.form["boardgame_name"])
     boardgame.update(request.form)
-    session["users_games"] = max(1, session.get("users_games", 1) - 1)
+    game_session = session[str(current_user.id)].setdefault(str(boardgame.id), {})
+    game_session["users_games"] = max(1, game_session.get("users_games", 1) - 1)
     boardgame_categories = db.get_boardgame_categories()
     photo = db.get_photo_by_boardgame_name_and_photo_id(
         boardgame.name,
@@ -1059,7 +1076,7 @@ def add_boardgame_minus() -> str:
     return render_template("boardgame.html",
         boardgame=boardgame,
         boardgame_categories=boardgame_categories,
-        n=session["users_games"],
+        n=game_session["users_games"],
         photo=photo,
         edit_photos=True
     )
@@ -1137,7 +1154,7 @@ def add_boardgame_delete_photo() -> str:
         "boardgame.html",
         boardgame=boardgame,
         boardgame_categories=boardgame_categories,
-        n=session.get("users_games", 1),
+        n=session[str(current_user.id)].setdefault(str(boardgame.id), {}).get("users_games", 1),
         photo=photo,
         edit_photos=True
     )
@@ -1163,7 +1180,7 @@ def add_boardgame_next_photo() -> str:
         "boardgame.html",
         boardgame=boardgame,
         boardgame_categories=boardgame_categories,
-        n=session.get("users_games", 1),
+        n=session[str(current_user.id)].setdefault(str(boardgame.id), {}).get("users_games", 1),
         photo=photo,
         edit_photos=True
     )
@@ -1192,7 +1209,7 @@ def add_boardgame_previous_photo() -> str:
         "boardgame.html",
         boardgame=boardgame,
         boardgame_categories=boardgame_categories,
-        n=session.get("users_games", 1),
+        n=session[str(current_user.id)].setdefault(str(boardgame.id), {}).get("users_games", 1),
         photo=photo,
         edit_photos=True
     )
