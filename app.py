@@ -782,7 +782,8 @@ def boardgame_page_add_photo(
         n=user_boardgames+reserved_user_boardgames,
         photo=photo,
         edit_photos=True,
-        review_page_info=review_page_info
+        review_page_info=review_page_info,
+        error_text_photo=error_text
     )
 
 @login_required

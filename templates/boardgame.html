@@ -120,7 +120,7 @@
                     </div>
                     <textarea name="description" class="description-input">{% if boardgame and boardgame.description %}{{ boardgame.description }}{% endif %}</textarea>
                     {% if error_text_boardgame %}
-                        <p>error_text_boardgame</p>
+                        <p>{{ error_text_boardgame }}</p>
                     {% endif %}
 
                     <div class="boardgame-page-edit-row" style="margin-top: 6px;">
