@@ -311,7 +311,7 @@ def get_boardgame_by_name(boardgame_name: str) -> Boardgame | None:
                 AVG(r.rating) - FLOOR(AVG(r.rating))
                 BETWEEN 0.25 AND 0.75, 1, 0
             ) AS half_star,
-            COUNT(p.id) AS number_of_photos
+            COUNT(*) AS number_of_photos
         FROM boardgames b
         LEFT JOIN categories c ON b.category_id = c.id
         LEFT JOIN ratings r ON r.boardgame_id = b.id
@@ -437,7 +437,7 @@ def get_user_boardgames(user_id: int, page_num: int) -> list[Boardgame] | None:
 def get_number_of_user_boardgames(user_id: int) -> int:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     n = conn.read(
-        "SELECT COUNT(id) FROM users_boardgames WHERE user_id = ?",
+        "SELECT COUNT(*) FROM users_boardgames WHERE user_id = ?",
         (user_id,)
     )
     return n[0][0]
@@ -1196,7 +1196,7 @@ def get_number_of_user_ratings(user_id: int) -> int:
 def get_number_of_boardgame_reviews(boardgame_id: int) -> int:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     n = conn.read(
-        "SELECT COUNT(boardgame_id) FROM ratings WHERE boardgame_id = ?",
+        "SELECT COUNT(*) FROM ratings WHERE boardgame_id = ?",
         (boardgame_id,)
     )
     return n[0][0]
@@ -1205,7 +1205,7 @@ def get_user_review_stats(user_id: int) -> tuple[int, int, bool] | None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     result = conn.read("""
         SELECT
-            COUNT(r.rating),
+            COUNT(*),
             CAST(SUM(r.rating) AS INTEGER) AS stars,
             IIF(
                 SUM(r.rating) - FLOOR(SUM(r.rating))
