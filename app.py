@@ -230,7 +230,9 @@ def create_user() -> Response | str:
         password_1 = request.form.get("password_1")
         password_2 = request.form.get("password_2")
 
-        if not username or len(username) > 100:
+        if not username:
+            error_text.append("käyttäjä nimeä ei ole")
+        if username and len(username) > 100:
             error_text.append("käyttäjä nimi liian pitkä")
         if not password_1 or len(password_1) < 12:
             error_text.append("salasana pitää olla vähintään 12 merkkiä pitkä")
