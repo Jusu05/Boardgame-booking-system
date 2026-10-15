@@ -679,7 +679,7 @@ def boardgame_page_reserve(
     else:
         booking_error_text = "Toinen kentissä on tyhjä"    
 
-    if not booking_error_text:
+    if booking_error_text:
         return render_template(
             "boardgame.html",
             boardgame=boardgame,
