@@ -1330,8 +1330,14 @@ def set_boardgame_returned(boardgame: Boardgame, user_id: int) -> None:
     conn.write("""
         UPDATE reservation
         SET end_time = ?
-        WHERE boardgame_id = ?
+        WHERE id = (
+            SELECT id
+            FROM reservation
+            WHERE boardgame_id = ?
             AND reserver = ?
+            ORDER BY id DESC
+            LIMIT 1
+        )
     """, (date, boardgame.id, user_id))
 
     conn.write("""
@@ -1339,7 +1345,7 @@ def set_boardgame_returned(boardgame: Boardgame, user_id: int) -> None:
         SET reserved_user_games = reserved_user_games - 1,
             user_games = user_games + 1
         WHERE boardgame_id = ?
-              AND user_id = (SELECT user_id
+              AND user_id = (SELECT game_owner
                              FROM reservation
                              WHERE boardgame_id = ?
                                    AND reserver = ?)
