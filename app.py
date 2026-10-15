@@ -452,7 +452,8 @@ def boardgame_page(boardgame_name: str) -> Response | str:
                     review_page_info
                 )
             case "return":
-                db.set_boardgame_returned(boardgame, current_user.id)
+                if current_user.is_authenticated:
+                    db.set_boardgame_returned(boardgame, current_user.id)
 
     if current_user.is_authenticated:
         users_boardgames = db.get_user_boardgame_ids(current_user.id)
