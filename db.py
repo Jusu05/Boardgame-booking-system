@@ -1244,7 +1244,7 @@ def insert_reservation(
 ) -> None:
     conn = SqlConnection(os.getenv("DATABASE_NAME"))
     game_owner = conn.read("""
-        SELECT user_games, reserved_user_games, user_id
+        SELECT user_games, reserved_user_games, user_id, boardgame_id
         FROM users_boardgames
         WHERE user_games - reserved_user_games > 0
           AND boardgame_id = ?
@@ -1259,6 +1259,7 @@ def insert_reservation(
         UPDATE users_boardgames
         SET user_games = ? - 1, reserved_user_games = ? + 1
         WHERE user_id = ?
+              AND boardgame_id = ?
     """, game_owner[0])
 
     conn.write("""
